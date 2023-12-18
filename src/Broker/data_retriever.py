@@ -1,7 +1,7 @@
 import abc
 from enum import Enum
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 from tinkoff.invest import Client, InstrumentIdType, OperationState
 
 
@@ -17,12 +17,14 @@ class Assets_type(Enum):
 class Asset(BaseModel):
     figi: str
     name: str
-    asset_type: Assets_type
+    asset_type: str
     price: float
     count: int
 
 
 class Operation(BaseModel):
+    figi: str
+    name: str
     date: datetime
     count: int
     price: float
@@ -61,6 +63,14 @@ class BrokerDataAdapterTinkoff(IBrokerDataAdapter):
             for item in self.client.users.get_accounts().accounts
             if item.name != "Инвесткопилка"
         ]
+        self.assets_dict = {
+            "share": self.client.instruments.share_by,
+            "bond": self.client.instruments.bond_by,
+            "currency": self.client.instruments.currency_by,
+            "etf": self.client.instruments.etf_by,
+            "future": self.client.instruments.future_by,
+            "option": self.client.instruments.option_by,
+        }
 
     def __enter__(self):
         self.client = Client(self.broker_token).__enter__()
@@ -93,38 +103,32 @@ class BrokerDataAdapterTinkoff(IBrokerDataAdapter):
 
     def get_assets(self) -> list[Asset]:
         assets = []
-        assets_dict = {
-            "share": self.client.instruments.share_by,
-            "bond": self.client.instruments.bond_by,
-            "currency": self.client.instruments.currency_by,
-            "etf": self.client.instruments.etf_by,
-            "future": self.client.instruments.future_by,
-            "option": self.client.instruments.option_by,
-        }
         for item in self.id_list:
             try:
                 for elem in self.client.operations.get_portfolio(
                     account_id=item
                 ).positions:
-                    asset = assets_dict[elem.instrument_type](
+                    asset = self.assets_dict[elem.instrument_type](
                         id_type=InstrumentIdType(1), id=elem.figi
                     ).instrument
                     asset_price = self.get_asset_cost(elem.figi)
                     assets.append(
-                        {
-                            "figi": asset.figi,
-                            "name": asset.name,
-                            "asset_type": elem.instrument_type,
-                            "price": asset_price,
-                            "count": elem.quantity_lots.units,
-                        }
+                        Asset(
+                            figi=asset.figi,
+                            name=asset.name,
+                            asset_type=elem.instrument_type,
+                            price=asset_price,
+                            count=elem.quantity_lots.units,
+                        )
                     )
             except:
                 raise
         return assets
 
     def get_operations(
-        self, date_from: datetime | None = None, date_to: datetime | None = None
+        self,
+        date_from: datetime | None = datetime.now() - timedelta(days=120),
+        date_to: datetime | None = datetime.now(),
     ) -> list[Operation]:
         operations = []
         for item in self.id_list:
@@ -135,13 +139,18 @@ class BrokerDataAdapterTinkoff(IBrokerDataAdapter):
                     to=date_to,
                     state=OperationState(2),
                 ).operations:
+                    asset = self.assets_dict[elem.instrument_type](
+                        id_type=InstrumentIdType(1), id=elem.figi
+                    ).instrument
                     operations.append(
-                        {
-                            "date": elem.date,
-                            "count": elem.quantity,
-                            "price": elem.price.units + elem.price.nano / (10**9),
-                            "buy": True if elem.operation_type == 15 else False,
-                        }
+                        Operation(
+                            figi=elem.figi,
+                            name=asset.name,
+                            date=elem.date,
+                            count=elem.quantity,
+                            price=elem.price.units + elem.price.nano / (10**9),
+                            buy=True if elem.operation_type == 15 else False,
+                        )
                     )
             except:
                 raise
@@ -152,15 +161,4 @@ class BrokerDataAdapterTinkoff(IBrokerDataAdapter):
 
 
 if __name__ == "__main__":
-    broker = BrokerDataAdapterTinkoff(
-        broker_token="test_token"
-    )
-    # print(broker.get_total_assets_cost())
-    # print(broker.get_asset_cost("BBG004731032"))
-    # print(broker.get_assets())
-
-    print(
-        broker.get_operations(
-            date_from=datetime.fromisoformat("2023-04-12"), date_to=datetime.now()
-        )
-    )
+    broker = BrokerDataAdapterTinkoff()

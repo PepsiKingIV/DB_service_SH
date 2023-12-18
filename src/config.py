@@ -4,3 +4,8 @@ import os
 load_dotenv()
 
 TINKOFF_TOKEN = os.environ.get("tinkoff_token")
+
+DB_HOST = os.environ.get("DB_HOST")
+DB_USER = os.environ.get("DB_USER")
+DB_PASS = os.environ.get("DB_PASS")
+DB_NAME = os.environ.get("DB_NAME")
