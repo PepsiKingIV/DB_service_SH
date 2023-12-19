@@ -161,4 +161,7 @@ class BrokerDataAdapterTinkoff(IBrokerDataAdapter):
 
 
 if __name__ == "__main__":
-    broker = BrokerDataAdapterTinkoff()
+    broker = BrokerDataAdapterTinkoff(
+        "t.0ENxQzzYK9CwaWyXrx13Qth-qaylQPvSX-x7EWE6P_oaLy3pctnUinGy0kr4kVuB2rXcIF6gcfGVIe56299-6A"
+    )
+    

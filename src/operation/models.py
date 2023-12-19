@@ -1,5 +1,5 @@
 from datetime import datetime
-from src.database import metadata
+from database import metadata
 from sqlalchemy import (
     MetaData,
     Table,

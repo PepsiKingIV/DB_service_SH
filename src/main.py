@@ -2,6 +2,8 @@ from tinkoff.invest import Client, Operation, InstrumentIdType
 from Broker.data_recording import process
 from auth.models import User
 from datetime import timedelta
+from database import get_async_session, engine
+import asyncio
 
 TOKEN = "token"
 
@@ -17,4 +19,4 @@ TOKEN = "token"
 #     #             current_price: {i.current_price.units+i.current_price.nano / (10**9)}"
 #     #     )
 
-process(user=User, frequency=timedelta(days=1))
+asyncio.run(process(user=User, frequency=timedelta(minutes=60), engine=engine))
