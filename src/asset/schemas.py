@@ -2,27 +2,18 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class RequestOperation(BaseModel):
-    amount: float
+class RequestAsset(BaseModel):
     date: datetime
-    priority: int | None
+    figi: str
+    instrument_type_id: int
+    name: str
+    price: float
+    count: int
 
 
-class OperationResponse(BaseModel):
+class ResponseAsset(RequestAsset):
     id: int
-    user_id: int
-    debit: bool
-    amount: float
-    date: datetime
-    type_name: str
-    priority: int | None
 
 
-class DeletedOperation(BaseModel):
+class AssetID(BaseModel):
     id: int
-    user_type_id: int
-    debit: bool
-    amount: float
-    date: datetime
-    type_id: int
-    priority: int

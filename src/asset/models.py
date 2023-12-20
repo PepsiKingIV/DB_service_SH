@@ -19,7 +19,7 @@ asset = Table(
     Column("id", Integer(), primary_key=True),
     Column("user_id", Integer(), ForeignKey("user.id")),
     Column(
-        "instrument_type", Integer(), ForeignKey("instrument_types.id"), nullable=False
+        "instrument_type_id", Integer(), ForeignKey("instrument_types.id"), nullable=False
     ),
     Column("figi", String(length=50), nullable=False),
     Column("price", Float(), nullable=False),

@@ -103,6 +103,3 @@ async def asset_record(engine: AsyncEngine, accounts: list):
         await session.close()
         await logger.info("Data on open positions has been recorded successfully")
 
-
-if __name__ == "__main__":
-    process(User, frequency=timedelta(days=1))

@@ -1,22 +1,46 @@
-from tinkoff.invest import Client, Operation, InstrumentIdType
-from Broker.data_recording import process
+from fastapi import FastAPI
+from fastapi_users import FastAPIUsers
+# from Broker.data_recording import process
+from auth.manager import get_user_manager
 from auth.models import User
 from datetime import timedelta
+from auth.schemas import UserCreate, UserRead
 from database import get_async_session, engine
 import asyncio
+from auth.auth import auth_backend
+from operation.routes import route as operation_route
+from asset.routes import route as asset_route
+
 
 TOKEN = "token"
+# asyncio.run(process(user=User, frequency=timedelta(minutes=60), engine=engine))
 
-# with Client(TOKEN) as client:
-#     for i in client.users.get_accounts().accounts:
-#         print(i.id)
-#     data = client.operations.get_portfolio(account_id="2173418068")
-#     # print(client.instruments.share_by(id_type=InstrumentIdType(1), id="BBG004731032").instrument.name)
-#     # for i in data.positions:
-#     #     print(
-#     #         f"figi: {i.figi}\n\
-#     #             quantity: {i.quantity_lots.units}\n\
-#     #             current_price: {i.current_price.units+i.current_price.nano / (10**9)}"
-#     #     )
+app = FastAPI(title="Balanced")
 
-asyncio.run(process(user=User, frequency=timedelta(minutes=60), engine=engine))
+fastapi_users = FastAPIUsers[User, int](
+    get_user_manager,
+    [auth_backend],
+)
+
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+)
+
+app.include_router(
+    fastapi_users.get_verify_router(UserRead),
+    prefix="/verify",
+    tags=["verify"],
+)
+
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
+
+app.include_router(router=operation_route)
+
+
+app.include_router(router=asset_route)

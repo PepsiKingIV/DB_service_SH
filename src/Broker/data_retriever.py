@@ -1,57 +1,7 @@
-import abc
-from enum import Enum
-from pydantic import BaseModel
 from datetime import datetime, timedelta
 from tinkoff.invest import Client, InstrumentIdType, OperationState
-
-
-class Assets_type(Enum):
-    SHARE = 1
-    BOND = 2
-    FUTURE = 3
-    CURRENCY = 4
-    ETF = 5
-    OPTION = 6
-
-
-class Asset(BaseModel):
-    figi: str
-    name: str
-    asset_type: str
-    price: float
-    count: int
-
-
-class Operation(BaseModel):
-    figi: str
-    name: str
-    date: datetime
-    count: int
-    price: float
-    buy: bool
-
-
-class IBrokerDataAdapter:
-    broker_token: str
-
-    @abc.abstractmethod
-    def get_total_assets_cost(self) -> float:
-        ...
-
-    @abc.abstractmethod
-    def get_asset_cost(self, figi: str, asset_type: Assets_type) -> float:
-        ...
-
-    @abc.abstractmethod
-    def get_assets(self) -> list[Asset]:
-        ...
-
-    @abc.abstractmethod
-    def get_operations(self, date_from: datetime, date_to: datetime) -> list[Operation]:
-        ...
-
-
-# TODO написать реализацию класса
+from schemas import Operation, Assets_type, Asset, Payment_date
+from Interfaces import IBrokerDataAdapter
 
 
 class BrokerDataAdapterTinkoff(IBrokerDataAdapter):
@@ -156,12 +106,17 @@ class BrokerDataAdapterTinkoff(IBrokerDataAdapter):
                 raise
         return operations
 
+    def get_payment_date(
+        self, date_from: datetime, date_to: datetime, figi: str
+    ) -> Payment_date:
+        data = self.client.instruments.get_dividends(
+            figi=figi, _from=date_from, to=date_to
+        )
+        return Payment_date(
+            figi=figi,
+            date=data.payment_date,
+            amount=data.dividend_net.units + data.dividend_net.nano / (10**9),
+        )
+
     def __exit__(self):
         Client(self.broker_token).__exit__()
-
-
-if __name__ == "__main__":
-    broker = BrokerDataAdapterTinkoff(
-        "t.0ENxQzzYK9CwaWyXrx13Qth-qaylQPvSX-x7EWE6P_oaLy3pctnUinGy0kr4kVuB2rXcIF6gcfGVIe56299-6A"
-    )
-    

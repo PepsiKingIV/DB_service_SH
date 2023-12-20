@@ -29,6 +29,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
 
+
 user = Table(
     "user",
     metadata,
@@ -40,4 +41,20 @@ user = Table(
     Column("is_active", Boolean(), default=True, nullable=False),
     Column("is_superuser", Boolean(), default=False, nullable=False),
     Column("is_verified", Boolean(), default=False, nullable=False),
+)
+
+asset_ratio = Table(
+    "asset_ratio",
+    metadata,
+    Column("id", Integer(), primary_key=True),
+    Column("user_id", Integer(), ForeignKey("user.id"), nullable=False),
+    Column("ratio", Float(), nullable=False),
+    Column("name", String(50), nullable=False),
+    Column("figi", String(50), nullable=False),
+    Column(
+        "instrument_type_id",
+        Integer(),
+        ForeignKey("instrument_types.id"),
+        nullable=False,
+    ),
 )
