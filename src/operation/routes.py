@@ -7,7 +7,7 @@ from auth.manager import get_user_manager
 from auth.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from operation.models import operation
-from operation.schemas import RequestOperation, ResponseOperation
+from operation.schemas import RequestOperation, ResponseOperation, RequestOperationSuper
 
 from database import get_async_session
 
@@ -38,7 +38,7 @@ async def set_operations(
     )
     await session.execute(stmt)
     await session.commit()
-    return {"status_code": "201", "content": "the record was created successfully"}
+    return {"status_code": 201, "content": "the record was created successfully"}
 
 
 @route.get("get/")
@@ -60,7 +60,7 @@ async def delete_operation(
     stmt = delete(operation).where(operation.c.id == operation.id)
     await session.execute(stmt)
     await session.commit()
-    return {"status_code": "200", "content": "the record was successfully deleted"}
+    return {"status_code": 200, "content": "the record was successfully deleted"}
 
 
 @route.put("put/")
@@ -83,4 +83,76 @@ async def change_operation(
     )
     await session.execute(stmt)
     await session.commit()
-    return {"status_code": "200", "content": "the record has been successfully changed"}
+    return {"status_code": 200, "content": "the record has been successfully changed"}
+
+
+@route.post("post_super/")
+async def set_operations(
+    new_operation: RequestOperationSuper,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(c_user),
+):
+    if user.is_superuser:
+        stmt = insert(operation).values(
+            user_id=new_operation.user_id,
+            buy=new_operation.buy,
+            figi=new_operation.figi,
+            price=new_operation.price,
+            count=new_operation.count,
+            date=new_operation.date.replace(tzinfo=None),
+        )
+        await session.execute(stmt)
+        await session.commit()
+        return {"status_code": 201, "content": "the record was created successfully"}
+    else:
+        return {"status_code": 403, "content": "You are not a super user"}
+
+
+@route.put("put_super/")
+async def change_operation(
+    operation: int,
+    new_operation: RequestOperationSuper,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(c_user),
+):
+    if user.is_superuser:
+        stmt = (
+            update(operation)
+            .where(
+                operation.c.id == operation.id,
+                operation.c.user_id == new_operation.user_id,
+            )
+            .values(
+                user_id=new_operation.user_id,
+                buy=new_operation.buy,
+                price=new_operation.price,
+                count=new_operation.count,
+                date=new_operation.date.replace(tzinfo=None),
+            )
+        )
+        await session.execute(stmt)
+        await session.commit()
+        return {
+            "status_code": 200,
+            "content": "the record has been successfully changed",
+        }
+    else:
+        return {"status_code": 403, "content": "You are not a super user"}
+
+
+@route.delete("delete_super/")
+async def delete_operation(
+    operation: int,
+    user_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(c_user),
+):
+    if user.is_superuser:
+        stmt = delete(operation).where(
+            operation.c.id == operation.id, operation.c.user_id == user_id
+        )
+        await session.execute(stmt)
+        await session.commit()
+        return {"status_code": 200, "content": "the record was successfully deleted"}
+    else:
+        return {"status_code": 403, "content": "You are not a super user"}

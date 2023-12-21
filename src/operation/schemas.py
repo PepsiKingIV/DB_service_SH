@@ -12,6 +12,9 @@ class RequestOperation(BaseModel):
     expectations: str | None = None
 
 
+class RequestOperationSuper(RequestOperation):
+    user_id: int
+
+
 class ResponseOperation(RequestOperation):
     id: int
-

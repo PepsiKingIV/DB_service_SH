@@ -7,7 +7,7 @@ from auth.manager import get_user_manager
 from auth.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from asset.models import asset
-from asset.schemas import RequestAsset, ResponseAsset
+from asset.schemas import RequestAsset, ResponseAsset, RequestAssetSuper
 
 from database import get_async_session
 
@@ -49,7 +49,7 @@ async def set_asset(
     )
     await session.execute(stmt)
     await session.commit()
-    return {"status_code": "201", "content": "the record was created successfully"}
+    return {"status_code": 201, "content": "the record was created successfully"}
 
 
 @route.delete("delete/")
@@ -61,7 +61,7 @@ async def delete_asset(
     stmt = delete(asset).where(asset.c.id == asset_id.id)
     await session.execute(stmt)
     await session.commit()
-    return {"status_code": "200", "content": "the record was successfully deleted"}
+    return {"status_code": 200, "content": "the record was successfully deleted"}
 
 
 @route.put("put/")
@@ -85,4 +85,73 @@ async def change_asset(
     )
     await session.execute(stmt)
     await session.commit()
-    
+    return {"status_code": 200, "content": "the record was successfully updated"}
+
+
+@route.post("post_super/")
+async def set_asset(
+    new_asset: RequestAssetSuper,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(c_user),
+):
+    if user.is_superuser:
+        stmt = insert(asset).values(
+            user_id=new_asset.user_id,
+            figi=new_asset.figi,
+            name=new_asset.name,
+            asset_type=new_asset.instrument_type_id,
+            price=new_asset.price,
+            count=new_asset.count,
+            date=new_asset.date,
+        )
+        await session.execute(stmt)
+        await session.commit()
+        return {"status_code": 201, "content": "the record was created successfully"}
+    else:
+        return {"status_code": 403, "content": "You are not a super user"}
+
+
+@route.delete("delete_super/")
+async def delete_asset(
+    asset_id: int,
+    user_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(c_user),
+):
+    if user.is_superuser:
+        stmt = delete(asset).where(
+            asset.c.id == asset_id.id, asset.c.user_id == user_id
+        )
+        await session.execute(stmt)
+        await session.commit()
+        return {"status_code": 200, "content": "the record was successfully deleted"}
+    else:
+        return {"status_code": 403, "content": "You are not a super user"}
+
+
+@route.put("put_super/")
+async def change_asset(
+    asset_id: int,
+    new_asset: RequestAssetSuper,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(c_user),
+):
+    if user.is_superuser:
+        stmt = (
+            update(asset)
+            .where(asset.c.id == asset_id, asset_id.c.user_id == new_asset.user_id)
+            .values(
+                new_asset.user_id,
+                figi=new_asset.figi,
+                name=new_asset.name,
+                asset_type=new_asset.instrument_type_id,
+                price=new_asset.price,
+                count=new_asset.count,
+                date=new_asset.date,
+            )
+        )
+        await session.execute(stmt)
+        await session.commit()
+        return {"status_code": 200, "content": "the record was successfully updated"}
+    else:
+        return {"status_code": 403, "content": "You are not a super user"}

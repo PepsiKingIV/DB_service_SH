@@ -15,5 +15,5 @@ class ResponseAsset(RequestAsset):
     id: int
 
 
-class AssetID(BaseModel):
-    id: int
+class RequestAssetSuper(RequestAsset):
+    user_id: int

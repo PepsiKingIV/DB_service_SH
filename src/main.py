@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi_users import FastAPIUsers
+
 # from Broker.data_recording import process
 from auth.manager import get_user_manager
 from auth.models import User
@@ -10,6 +11,7 @@ import asyncio
 from auth.auth import auth_backend
 from operation.routes import route as operation_route
 from asset.routes import route as asset_route
+from auth.routes import route as auth_route
 
 
 TOKEN = "token"
@@ -39,6 +41,8 @@ app.include_router(
     prefix="/auth",
     tags=["auth"],
 )
+
+app.include_router(auth_route)
 
 app.include_router(router=operation_route)
 
