@@ -43,18 +43,4 @@ user = Table(
     Column("is_verified", Boolean(), default=False, nullable=False),
 )
 
-asset_ratio = Table(
-    "asset_ratio",
-    metadata,
-    Column("id", Integer(), primary_key=True),
-    Column("user_id", Integer(), ForeignKey("user.id"), nullable=False),
-    Column("ratio", Float(), nullable=False),
-    Column("name", String(50), nullable=False),
-    Column("figi", String(50), nullable=False),
-    Column(
-        "instrument_type_id",
-        Integer(),
-        ForeignKey("instrument_types.id"),
-        nullable=False,
-    ),
-)
+

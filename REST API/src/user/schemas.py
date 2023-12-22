@@ -8,6 +8,13 @@ class ProfileResponse(BaseModel):
 
 
 class RatioRequest(BaseModel):
-    instrument: str
+    instrument_id: int
     ratio: float
-    
+    name: str | None = None
+    figi: str | None = None
+
+
+class UsersTokens(BaseModel):
+    id: int
+    username: str
+    tinkoff_invest_token: str

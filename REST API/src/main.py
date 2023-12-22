@@ -11,7 +11,7 @@ import asyncio
 from auth.auth import auth_backend
 from operation.routes import route as operation_route
 from asset.routes import route as asset_route
-from auth.routes import route as auth_route
+from user.routes import route as user_route
 
 
 TOKEN = "token"
@@ -42,9 +42,9 @@ app.include_router(
     tags=["auth"],
 )
 
-app.include_router(auth_route)
 
 app.include_router(router=operation_route)
 
-
 app.include_router(router=asset_route)
+
+app.include_router(router=user_route)
