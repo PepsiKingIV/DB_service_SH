@@ -17,7 +17,7 @@ from user.routes import route as user_route
 TOKEN = "token"
 # asyncio.run(process(user=User, frequency=timedelta(minutes=60), engine=engine))
 
-app = FastAPI(title="Balanced")
+app = FastAPI(title="Sheres")
 
 fastapi_users = FastAPIUsers[User, int](
     get_user_manager,

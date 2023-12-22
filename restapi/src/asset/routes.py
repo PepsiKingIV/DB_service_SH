@@ -22,7 +22,7 @@ fastapi_users = FastAPIUsers[User, int](
 c_user = fastapi_users.current_user()  # c_user = current_user
 
 
-@route.get("get/")
+@route.get("/get")
 async def get_asset(
     session: AsyncSession = Depends(get_async_session), user: User = Depends(c_user)
 ) -> list[ResponseAsset]:
@@ -32,7 +32,7 @@ async def get_asset(
     return result.all()
 
 
-@route.post("post/")
+@route.post("/post")
 async def set_asset(
     new_asset: RequestAsset,
     session: AsyncSession = Depends(get_async_session),
@@ -52,7 +52,7 @@ async def set_asset(
     return {"status_code": 201, "content": "the record was created successfully"}
 
 
-@route.delete("delete/")
+@route.delete("/delete")
 async def delete_asset(
     asset_id: int,
     session: AsyncSession = Depends(get_async_session),
@@ -64,7 +64,7 @@ async def delete_asset(
     return {"status_code": 200, "content": "the record was successfully deleted"}
 
 
-@route.put("put/")
+@route.put("/put")
 async def change_asset(
     asset_id: int,
     new_asset: RequestAsset,
@@ -88,7 +88,7 @@ async def change_asset(
     return {"status_code": 200, "content": "the record was successfully updated"}
 
 
-@route.post("post_super/")
+@route.post("/post_super")
 async def set_asset(
     new_asset: RequestAssetSuper,
     session: AsyncSession = Depends(get_async_session),
@@ -111,7 +111,7 @@ async def set_asset(
         return {"status_code": 403, "content": "You are not a super user"}
 
 
-@route.delete("delete_super/")
+@route.delete("/delete_super")
 async def delete_asset(
     asset_id: int,
     user_id: int,
@@ -129,7 +129,7 @@ async def delete_asset(
         return {"status_code": 403, "content": "You are not a super user"}
 
 
-@route.put("put_super/")
+@route.put("/put_super")
 async def change_asset(
     asset_id: int,
     new_asset: RequestAssetSuper,

@@ -16,5 +16,14 @@ class RatioRequest(BaseModel):
 
 class UsersTokens(BaseModel):
     id: int
-    username: str
-    tinkoff_invest_token: str
+    username: str | None = None
+    tinkoff_invest_token: str | None = None
+
+
+class Instruments(BaseModel):
+    id: int
+    type_name: str
+
+
+class Instrument_ratio(Instruments):
+    ratio: float

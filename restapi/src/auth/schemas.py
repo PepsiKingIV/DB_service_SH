@@ -9,7 +9,6 @@ class UserRead(schemas.BaseUser[int]):
     id: int
     email: EmailStr
     username: str
-    telegram_id: str
     is_active: bool = True
     is_superuser: bool = False
     is_verified: bool = False
@@ -20,8 +19,7 @@ class UserRead(schemas.BaseUser[int]):
 
 class UserCreate(schemas.BaseUserCreate):
     username: str
-    token: str
-    telegram_id: str
+    tinkoff_invest_token: str
     email: EmailStr
     password: str
     is_active: Optional[bool] = True

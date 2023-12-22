@@ -8,7 +8,13 @@ from auth.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from user.models import asset_ratio
 from asset.models import instrument_types
-from user.schemas import ProfileResponse, RatioRequest, UsersTokens
+from user.schemas import (
+    ProfileResponse,
+    RatioRequest,
+    UsersTokens,
+    Instruments,
+    Instrument_ratio,
+)
 from auth.models import user
 
 from database import get_async_session
@@ -24,53 +30,53 @@ fastapi_users = FastAPIUsers[User, int](
 c_user = fastapi_users.current_user()  # c_user = current_user
 
 
-@route.post("set-token/")
+@route.post("/set-token")
 async def set_token(
     token: str,
     session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(c_user),
+    c_user: User = Depends(c_user),
 ):
-    stmt = update(user).where(user.c.id == user.id).values(tinkoff_invest_token=token)
+    stmt = update(user).where(user.c.id == c_user.id).values(tinkoff_invest_token=token)
     await session.execute(stmt)
     await session.commit()
     return {"status_code": 200, "content": "the record has been successfully changed"}
 
 
-@route.post("set-username/")
+@route.post("/set-username")
 async def set_username(
     username: str,
     session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(c_user),
+    c_user: User = Depends(c_user),
 ):
-    stmt = update(user).where(user.c.id == user.id).values(username=username)
+    stmt = update(user).where(user.c.id == c_user.id).values(username=username)
     await session.execute(stmt)
     await session.commit()
     return {"status_code": 200, "content": "the record has been successfully changed"}
 
 
-@route.get("")
+@route.get("/")
 async def get_profile(
     session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(c_user),
+    c_user: User = Depends(c_user),
 ) -> ProfileResponse:
-    query = select(user.c.username, user.c.email).where(user.c.id == user.id)
+    query = select(user.c.username, user.c.email).where(user.c.id == c_user.id)
     result = await session.execute(query)
     await session.commit()
     return result.first()
 
 
-@route.get("instrument-list/")
+@route.get("/instrument-list")
 async def instrument_list(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
-) -> list[str]:
-    query = select(instrument_types.name)
+) -> list[Instruments]:
+    query = select(instrument_types.c.id, instrument_types.c.type_name)
     result = await session.execute(query)
     await session.commit()
     return result.all()
 
 
-@route.post("ratio/")
+@route.post("/set-ratio")
 async def set_instrument_ratio(
     instrument: RatioRequest,
     session: AsyncSession = Depends(get_async_session),
@@ -92,11 +98,28 @@ async def set_instrument_ratio(
     return {
         "status_code": 201,
         "content": "the record was created successfully",
-        "record ID": result.first(),
+        "record ID": result.first()[0],
     }
 
 
-@route.put("ratio_update/")
+@route.get("/ratio")
+async def get_ratio(
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(c_user),
+) -> list[Instrument_ratio]:
+    query = (
+        select(instrument_types.c.type_name, asset_ratio.c.ratio, asset_ratio.c.id)
+        .select_from(asset_ratio)
+        .join(instrument_types)
+        .where(asset_ratio.c.user_id == user.id)
+    )
+    print(query)
+    result = await session.execute(query)
+    await session.commit()
+    return result.all()
+
+
+@route.put("/ratio-update")
 async def set_instrument_ratio(
     instrument: RatioRequest,
     session: AsyncSession = Depends(get_async_session),
@@ -118,7 +141,7 @@ async def set_instrument_ratio(
     return {"status_code": 200, "content": "the record has been successfully changed"}
 
 
-@route.delete("ratio_update/")
+@route.delete("/ratio_delete")
 async def set_instrument_ratio(
     asset_ratio_id: int,
     session: AsyncSession = Depends(get_async_session),
@@ -130,11 +153,11 @@ async def set_instrument_ratio(
     return {"status_code": 200, "content": "the record was successfully deleted"}
 
 
-@route.get("users/")
+@route.get("/users")
 async def get_users(
     session: AsyncSession = Depends(get_async_session),
     super_user: User = Depends(c_user),
-) -> UsersTokens:
+) -> list[UsersTokens]:
     if super_user.is_superuser:
         query = select(user.c.id, user.c.username, user.c.tinkoff_invest_token)
         result = await session.execute(query)
