@@ -21,6 +21,7 @@ asset = Table(
     Column(
         "instrument_type_id", Integer(), ForeignKey("instrument_types.id"), nullable=False
     ),
+    Column("name", String(length=50), nullable=False),
     Column("figi", String(length=50), nullable=False),
     Column("price", Float(), nullable=False),
     Column("date", DateTime(), default=datetime.utcnow),

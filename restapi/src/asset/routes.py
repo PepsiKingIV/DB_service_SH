@@ -1,6 +1,6 @@
 from auth.auth import auth_backend
 from fastapi import APIRouter, Depends
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi_users import FastAPIUsers
 from sqlalchemy import select, insert, delete, update
 from auth.manager import get_user_manager
@@ -38,18 +38,34 @@ async def set_asset(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    stmt = insert(asset).values(
-        user_id=user.id,
-        figi=new_asset.figi,
-        name=new_asset.name,
-        asset_type=new_asset.instrument_type_id,
-        price=new_asset.price,
-        count=new_asset.count,
-        date=new_asset.date,
+    if new_asset.count < 1:
+        raise HTTPException(
+            status_code=404, detail="the value of 'count' must be greater than zero"
+        )
+    if new_asset.price <= 0:
+        raise HTTPException(
+            status_code=404, detail="the value of 'price' must be greater than zero"
+        )
+    stmt = (
+        insert(asset)
+        .values(
+            user_id=user.id,
+            figi=new_asset.figi,
+            name=new_asset.name,
+            instrument_type_id=new_asset.instrument_type_id,
+            price=new_asset.price,
+            count=new_asset.count,
+            date=new_asset.date.replace(tzinfo=None),
+        )
+        .returning(asset.c.id)
     )
-    await session.execute(stmt)
+    result = await session.execute(stmt)
     await session.commit()
-    return {"status_code": 201, "content": "the record was created successfully"}
+    return {
+        "status_code": 201,
+        "content": "the record was created successfully",
+        "record ID": result.first()[0],
+    }
 
 
 @route.delete("/delete")
@@ -58,10 +74,25 @@ async def delete_asset(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    stmt = delete(asset).where(asset.c.id == asset_id.id)
-    await session.execute(stmt)
-    await session.commit()
-    return {"status_code": 200, "content": "the record was successfully deleted"}
+    stmt = delete(asset).where(asset.c.id == asset_id).returning(asset.c.id)
+    try:
+        result = await session.execute(stmt)
+        await session.commit()
+        id = result.first()
+        if id:
+            return {
+                "status_code": 200,
+                "content": "the record has been successfully deleted",
+                "record ID": id[0],
+            }
+        else:
+            raise HTTPException(
+                status_code=404, detail="there is no record with the specified number"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=404, detail="the specified values cannot be processed"
+        )
 
 
 @route.put("/put")
@@ -71,21 +102,44 @@ async def change_asset(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
+    if new_asset.count < 1:
+        raise HTTPException(
+            status_code=404, detail="the value of 'count' must be greater than zero"
+        )
+    if new_asset.price <= 0:
+        raise HTTPException(
+            status_code=404, detail="the value of 'price' must be greater than zero"
+        )
     stmt = (
         update(asset)
-        .where(asset.c.id == asset_id, asset_id.c.user_id == user.id)
+        .where(asset.c.id == asset_id, asset.c.user_id == user.id)
         .values(
             figi=new_asset.figi,
             name=new_asset.name,
-            asset_type=new_asset.instrument_type_id,
+            instrument_type_id=new_asset.instrument_type_id,
             price=new_asset.price,
             count=new_asset.count,
-            date=new_asset.date,
+            date=new_asset.date.replace(tzinfo=None),
         )
-    )
-    await session.execute(stmt)
-    await session.commit()
-    return {"status_code": 200, "content": "the record was successfully updated"}
+    ).returning(asset.c.id)
+    try:
+        result = await session.execute(stmt)
+        await session.commit()
+        id = result.first()
+        if id:
+            return {
+                "status_code": 200,
+                "content": "the record has been successfully changed",
+                "record ID": id[0],
+            }
+        else:
+            raise HTTPException(
+                status_code=404, detail="there is no record with the specified number"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=404, detail="the specified values cannot be processed"
+        )
 
 
 @route.post("/post_super")
@@ -95,18 +149,38 @@ async def set_asset(
     user: User = Depends(c_user),
 ):
     if user.is_superuser:
-        stmt = insert(asset).values(
-            user_id=new_asset.user_id,
-            figi=new_asset.figi,
-            name=new_asset.name,
-            asset_type=new_asset.instrument_type_id,
-            price=new_asset.price,
-            count=new_asset.count,
-            date=new_asset.date,
+        if new_asset.count < 1:
+            raise HTTPException(
+                status_code=404, detail="the value of 'count' must be greater than zero"
+            )
+        if new_asset.price <= 0:
+            raise HTTPException(
+                status_code=404, detail="the value of 'price' must be greater than zero"
+            )
+        stmt = (
+            insert(asset)
+            .values(
+                user_id=new_asset.user_id,
+                figi=new_asset.figi,
+                name=new_asset.name,
+                instrument_type_id=new_asset.instrument_type_id,
+                price=new_asset.price,
+                count=new_asset.count,
+                date=new_asset.date.replace(tzinfo=None),
+            )
+            .returning(asset.c.id)
         )
-        await session.execute(stmt)
-        await session.commit()
-        return {"status_code": 201, "content": "the record was created successfully"}
+        try:
+            await session.execute(stmt)
+            await session.commit()
+            return {
+                "status_code": 201,
+                "content": "the record was created successfully",
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=404, detail="the specified values cannot be processed"
+            )
     else:
         return {"status_code": 403, "content": "You are not a super user"}
 
@@ -119,12 +193,24 @@ async def delete_asset(
     user: User = Depends(c_user),
 ):
     if user.is_superuser:
-        stmt = delete(asset).where(
-            asset.c.id == asset_id.id, asset.c.user_id == user_id
+        stmt = (
+            delete(asset)
+            .where(asset.c.id == asset_id, asset.c.user_id == user_id)
+            .returning(asset.c.id)
         )
-        await session.execute(stmt)
+        result = await session.execute(stmt)
         await session.commit()
-        return {"status_code": 200, "content": "the record was successfully deleted"}
+        id = result.first()
+        if id:
+            return {
+                "status_code": 200,
+                "content": "the record has been successfully deleted",
+                "record ID": id[0],
+            }
+        else:
+            raise HTTPException(
+                status_code=404, detail="there is no record with the specified number"
+            )
     else:
         return {"status_code": 403, "content": "You are not a super user"}
 
@@ -137,21 +223,44 @@ async def change_asset(
     user: User = Depends(c_user),
 ):
     if user.is_superuser:
+        if new_asset.count < 1:
+            raise HTTPException(
+                status_code=404, detail="the value of 'count' must be greater than zero"
+            )
+        if new_asset.price <= 0:
+            raise HTTPException(
+                status_code=404, detail="the value of 'price' must be greater than zero"
+            )
         stmt = (
             update(asset)
-            .where(asset.c.id == asset_id, asset_id.c.user_id == new_asset.user_id)
+            .where(asset.c.id == asset_id, asset.c.user_id == new_asset.user_id)
             .values(
-                new_asset.user_id,
                 figi=new_asset.figi,
                 name=new_asset.name,
-                asset_type=new_asset.instrument_type_id,
+                instrument_type_id=new_asset.instrument_type_id,
                 price=new_asset.price,
                 count=new_asset.count,
-                date=new_asset.date,
+                date=new_asset.date.replace(tzinfo=None),
             )
-        )
-        await session.execute(stmt)
-        await session.commit()
-        return {"status_code": 200, "content": "the record was successfully updated"}
+        ).returning(asset.c.id)
+        try:
+            result = await session.execute(stmt)
+            await session.commit()
+            id = result.first()
+            if id:
+                return {
+                    "status_code": 200,
+                    "content": "the record was successfully updated",
+                    "redord ID": id[0],
+                }
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail="there is no record with the specified number",
+                )
+        except Exception as e:
+            raise HTTPException(
+                status_code=404, detail="the specified values cannot be processed"
+            )
     else:
         return {"status_code": 403, "content": "You are not a super user"}
