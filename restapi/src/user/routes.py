@@ -1,6 +1,5 @@
 from auth.auth import auth_backend
-from fastapi import APIRouter, Depends
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi_users import FastAPIUsers
 from sqlalchemy import select, insert, delete, update
 from auth.manager import get_user_manager
@@ -16,6 +15,7 @@ from user.schemas import (
     Instrument_ratio,
 )
 from auth.models import user
+from user.service import amount_interest_checking
 
 from database import get_async_session
 
@@ -82,6 +82,10 @@ async def set_instrument_ratio(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
+    if instrument.ratio <= 0:
+        raise HTTPException(
+            status_code=422, detail="the value of 'ratio' must be greater than zero"
+        )
     stmt = (
         insert(asset_ratio)
         .values(
@@ -93,8 +97,13 @@ async def set_instrument_ratio(
         )
         .returning(asset_ratio.c.id)
     )
-    result = await session.execute(stmt)
-    await session.commit()
+    try:
+        result = await session.execute(stmt)
+        await session.commit()
+    except Exception as e:
+        raise HTTPException(
+            status_code=422, detail="the specified values cannot be processed"
+        )
     return {
         "status_code": 201,
         "content": "the record was created successfully",
@@ -113,7 +122,6 @@ async def get_ratio(
         .join(instrument_types)
         .where(asset_ratio.c.user_id == user.id)
     )
-    print(query)
     result = await session.execute(query)
     await session.commit()
     return result.all()
@@ -125,6 +133,10 @@ async def set_instrument_ratio(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
+    if instrument.ratio <= 0:
+        raise HTTPException(
+            status_code=422, detail="the value of 'ratio' must be greater than zero"
+        )
     stmt = (
         update(asset_ratio)
         .where(asset_ratio.c.user_id == user.id)
@@ -135,10 +147,20 @@ async def set_instrument_ratio(
             name=instrument.name,
             figi=instrument.figi,
         )
-    )
-    result = await session.execute(stmt)
-    await session.commit()
-    return {"status_code": 200, "content": "the record has been successfully changed"}
+    ).returning(asset_ratio.c.id)
+
+    try:
+        result = await session.execute(stmt)
+        await session.commit()
+    except Exception as e:
+        raise HTTPException(
+            status_code=422, detail="the specified values cannot be processed"
+        )
+    return {
+        "status_code": 200,
+        "content": "the record has been successfully changed",
+        "record ID": result.first()[0],
+    }
 
 
 @route.delete("/ratio_delete")
@@ -147,10 +169,21 @@ async def set_instrument_ratio(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    stmt = delete(asset_ratio).where(asset_ratio.c.id == asset_ratio_id)
-    await session.execute(stmt)
+    stmt = (
+        delete(asset_ratio)
+        .where(asset_ratio.c.id == asset_ratio_id)
+        .returning(asset_ratio.c.id)
+    )
+    result = await session.execute(stmt)
     await session.commit()
-    return {"status_code": 200, "content": "the record was successfully deleted"}
+    id = result.first()
+    id = id[0] if id else None
+    if id:
+        return {"status_code": 200, "content": "the record was successfully deleted"}
+    else:
+        raise HTTPException(
+            status_code=404, detail="there is no record with the specified number"
+        )
 
 
 @route.get("/users")

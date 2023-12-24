@@ -40,11 +40,11 @@ async def set_asset(
 ):
     if new_asset.count < 1:
         raise HTTPException(
-            status_code=404, detail="the value of 'count' must be greater than zero"
+            status_code=422, detail="the value of 'count' must be greater than zero"
         )
     if new_asset.price <= 0:
         raise HTTPException(
-            status_code=404, detail="the value of 'price' must be greater than zero"
+            status_code=422, detail="the value of 'price' must be greater than zero"
         )
     stmt = (
         insert(asset)
@@ -78,12 +78,12 @@ async def delete_asset(
     try:
         result = await session.execute(stmt)
         await session.commit()
-        id = result.first()
+        id = result.first()[0]
         if id:
             return {
                 "status_code": 200,
                 "content": "the record has been successfully deleted",
-                "record ID": id[0],
+                "record ID": id,
             }
         else:
             raise HTTPException(
@@ -91,7 +91,7 @@ async def delete_asset(
             )
     except Exception as e:
         raise HTTPException(
-            status_code=404, detail="the specified values cannot be processed"
+            status_code=422, detail="the specified values cannot be processed"
         )
 
 
@@ -104,11 +104,11 @@ async def change_asset(
 ):
     if new_asset.count < 1:
         raise HTTPException(
-            status_code=404, detail="the value of 'count' must be greater than zero"
+            status_code=422, detail="the value of 'count' must be greater than zero"
         )
     if new_asset.price <= 0:
         raise HTTPException(
-            status_code=404, detail="the value of 'price' must be greater than zero"
+            status_code=422, detail="the value of 'price' must be greater than zero"
         )
     stmt = (
         update(asset)
@@ -125,12 +125,12 @@ async def change_asset(
     try:
         result = await session.execute(stmt)
         await session.commit()
-        id = result.first()
+        id = result.first()[0]
         if id:
             return {
                 "status_code": 200,
                 "content": "the record has been successfully changed",
-                "record ID": id[0],
+                "record ID": id,
             }
         else:
             raise HTTPException(
@@ -138,7 +138,7 @@ async def change_asset(
             )
     except Exception as e:
         raise HTTPException(
-            status_code=404, detail="the specified values cannot be processed"
+            status_code=422, detail="the specified values cannot be processed"
         )
 
 
@@ -151,11 +151,11 @@ async def set_asset(
     if user.is_superuser:
         if new_asset.count < 1:
             raise HTTPException(
-                status_code=404, detail="the value of 'count' must be greater than zero"
+                status_code=422, detail="the value of 'count' must be greater than zero"
             )
         if new_asset.price <= 0:
             raise HTTPException(
-                status_code=404, detail="the value of 'price' must be greater than zero"
+                status_code=422, detail="the value of 'price' must be greater than zero"
             )
         stmt = (
             insert(asset)
@@ -179,7 +179,7 @@ async def set_asset(
             }
         except Exception as e:
             raise HTTPException(
-                status_code=404, detail="the specified values cannot be processed"
+                status_code=422, detail="the specified values cannot be processed"
             )
     else:
         return {"status_code": 403, "content": "You are not a super user"}
@@ -200,12 +200,12 @@ async def delete_asset(
         )
         result = await session.execute(stmt)
         await session.commit()
-        id = result.first()
+        id = result.first()[0]
         if id:
             return {
                 "status_code": 200,
                 "content": "the record has been successfully deleted",
-                "record ID": id[0],
+                "record ID": id,
             }
         else:
             raise HTTPException(
@@ -225,11 +225,11 @@ async def change_asset(
     if user.is_superuser:
         if new_asset.count < 1:
             raise HTTPException(
-                status_code=404, detail="the value of 'count' must be greater than zero"
+                status_code=422, detail="the value of 'count' must be greater than zero"
             )
         if new_asset.price <= 0:
             raise HTTPException(
-                status_code=404, detail="the value of 'price' must be greater than zero"
+                status_code=422, detail="the value of 'price' must be greater than zero"
             )
         stmt = (
             update(asset)
@@ -246,12 +246,12 @@ async def change_asset(
         try:
             result = await session.execute(stmt)
             await session.commit()
-            id = result.first()
-            if id:
+            id = result.first()[0]
+            if id:  
                 return {
                     "status_code": 200,
                     "content": "the record was successfully updated",
-                    "redord ID": id[0],
+                    "redord ID": id,
                 }
             else:
                 raise HTTPException(

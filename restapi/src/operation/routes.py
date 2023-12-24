@@ -39,17 +39,27 @@ async def set_operations(
             status_code=404,
             detail="A non-positive 'price' number is specified. (must be greater than zero)",
         )
-    stmt = insert(operation).values(
-        user_id=user.id,
-        buy=new_operation.buy,
-        figi=new_operation.figi,
-        price=new_operation.price,
-        count=new_operation.count,
-        date=new_operation.date.replace(tzinfo=None),
+    stmt = (
+        insert(operation)
+        .values(
+            user_id=user.id,
+            buy=new_operation.buy,
+            figi=new_operation.figi,
+            price=new_operation.price,
+            count=new_operation.count,
+            date=new_operation.date.replace(tzinfo=None),
+        )
+        .returning(operation.c.id)
     )
-    await session.execute(stmt)
+    result = await session.execute(stmt)
     await session.commit()
-    return {"status_code": 201, "content": "the record was created successfully"}
+    record = result.first()
+    id = record[0] if record else None
+    return {
+        "status_code": 201,
+        "content": "the record was created successfully",
+        "record ID": id,
+    }
 
 
 @route.get("/get")
@@ -72,11 +82,17 @@ async def delete_operation(
         delete(operation)
         .where(operation.c.id == operation.id)
         .returning(operation.c.id)
-    )
+    ).returning(operation.c.id)
     result = await session.execute(stmt)
     await session.commit()
+    record = result.first()
+    id = record[0] if record else None
     if result.first():
-        return {"status_code": 200, "content": "the record was successfully deleted"}
+        return {
+            "status_code": 200,
+            "content": "the record was successfully deleted",
+            "record ID": id,
+        }
     else:
         raise HTTPException(
             status_code=404, detail="there is no record with the specified number"
@@ -113,12 +129,13 @@ async def change_operation(
     ).returning(operation.c.id)
     result = await session.execute(stmt)
     await session.commit()
-    id = result.first()
+    record = result.first()
+    id = record[0] if record else None
     if id:
         return {
             "status_code": 200,
             "content": "the record has been successfully changed",
-            "record ID": id[0],
+            "record ID": id,
         }
     else:
         raise HTTPException(
@@ -143,17 +160,27 @@ async def set_operations(
             detail="A non-positive 'price' number is specified. (must be greater than zero)",
         )
     if user.is_superuser:
-        stmt = insert(operation).values(
-            user_id=new_operation.user_id,
-            buy=new_operation.buy,
-            figi=new_operation.figi,
-            price=new_operation.price,
-            count=new_operation.count,
-            date=new_operation.date.replace(tzinfo=None),
+        stmt = (
+            insert(operation)
+            .values(
+                user_id=new_operation.user_id,
+                buy=new_operation.buy,
+                figi=new_operation.figi,
+                price=new_operation.price,
+                count=new_operation.count,
+                date=new_operation.date.replace(tzinfo=None),
+            )
+            .returning(operation.c.id)
         )
-        await session.execute(stmt)
+        result = await session.execute(stmt)
         await session.commit()
-        return {"status_code": 201, "content": "the record was created successfully"}
+        record = result.first()
+        id = record[0] if record else None
+        return {
+            "status_code": 201,
+            "content": "the record was created successfully",
+            "record ID": id,
+        }
     else:
         return {"status_code": 403, "content": "You are not a super user"}
 
@@ -192,12 +219,13 @@ async def change_operation(
         ).returning(operation.c.id)
         result = await session.execute(stmt)
         await session.commit()
-        id = result.first()
+        record = result.first()
+        id = record[0] if record else None
         if id:
             return {
                 "status_code": 200,
                 "content": "the record has been successfully changed",
-                "record ID": id[0],
+                "record ID": id,
             }
         else:
             raise HTTPException(

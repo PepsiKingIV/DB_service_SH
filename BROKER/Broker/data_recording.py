@@ -2,12 +2,8 @@ import logging
 from datetime import datetime, timedelta
 from sqlalchemy import select, insert, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_async_session
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from .data_retriever import BrokerDataAdapterTinkoff
-from operation.models import operation
-from asset.models import asset
-from auth.models import User
 import asyncio
 
 logger = logging.getLogger(__name__)
