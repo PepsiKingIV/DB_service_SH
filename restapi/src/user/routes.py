@@ -15,7 +15,6 @@ from user.schemas import (
     Instrument_ratio,
 )
 from auth.models import user
-from user.service import amount_interest_checking
 
 from database import get_async_session
 

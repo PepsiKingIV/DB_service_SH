@@ -1,10 +1,9 @@
 import logging
 from datetime import datetime, timedelta
-from sqlalchemy import select, insert, delete, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio.engine import AsyncEngine
-from .data_retriever import BrokerDataAdapterTinkoff
+from Broker.data_retriever import BrokerDataAdapterTinkoff
 import asyncio
+from Broker.schemas import RequestOperationSuper, UsersAsset
+import requests
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -15,87 +14,76 @@ logger.addHandler(handler)
 logger.info(f"Logger for data_rocorder. Start:{datetime.now()}")
 
 
-async def process(
-    user: User,
-    frequency: timedelta,
-    engine: AsyncEngine,
-):
-    async with engine.begin() as session:
-        query = select(user.tinkoff_invest_token, user.id)
-        result = await session.execute(query)
-        accounts = list(result.all())
-        await session.close()
+class Recorder:
+    def __init__(self, url, email, password) -> None:
+        self.url = url
+        self.email = email
+        self.password = password
 
-        while True:
-            if datetime.now().minute % 60 == 0:
-                await operation_record(
-                    engine=engine, accounts=accounts, frequency=frequency
-                )
-                if datetime.now().hour % 12 == 0:
-                    await asset_record(engine=engine, accounts=accounts)
-                await asyncio.sleep(61)
+    async def login(self) -> int:
+        data = {"username": self.email, "password": self.password}
+        request = await requests.post(f"{self.url}/auth/jwt/login", data=data)
+        if request.status_code == 200:
+            cookies = request.cookies.get_dict()["operations"]
+            self.cookies = {"operations": cookies}
+            await logger.info("OperationRecorder has been successfully logged in")
+            return 0
+        else:
+            await logger.error(
+                request.status_code,
+                "|\t",
+                request.content,
+                "|\t",
+                "OperationRecorder couldn't log in",
+            )
+            return 1
 
-            if datetime.now().second % 5 == 0:
-                print(f"processing... {datetime.now()}")
-                await asyncio.sleep(1)
+    async def receiving_and_recording_operation_data(
+        self,
+        token: str,
+        user_id: int,
+        date_from: datetime | None = datetime.now() - timedelta(days=120),
+        date_to: datetime | None = datetime.now(),
+    ):
+        operations = await BrokerDataAdapterTinkoff(token).get_operations(
+            date_from=date_from, date_to=date_to
+        )
+        for i in operations:
+            request = await requests.post(
+                f"{self.url}/operation/post_super",
+                data=RequestOperationSuper(
+                    user_id=user_id,
+                    buy=i.buy,
+                    price=i.price,
+                    figi=i.figi,
+                    count=i.count,
+                    date=i.date,
+                ),
+                cookies=self.cookies,
+            )
+            if request.status_code != 201:
+                await logger.error(user_id, i, "the operation was not recorded")
+                # TODO: придумать, куда класть незаписанные данные, чтобы позже их обработать
 
-
-async def operation_record(
-    engine: AsyncEngine,
-    accounts: list,
-    frequency: timedelta,
-):
-    async with engine.begin() as session:
-        for i in accounts:
-            try:
-                operations = BrokerDataAdapterTinkoff(i[0]).get_operations(
-                    date_from=datetime.now() - frequency, date_to=datetime.now()
-                )
-            except Exception as e:
-                operations = []
-                await logger.error("Recording operations", "\n", e)
-            for elem in operations:
-                stmt = insert(operation).values(
-                    user_id=i[1],
-                    buy=elem.buy,
-                    price=elem.price,
-                    count=elem.count,
-                    date=elem.date.replace(tzinfo=None),
-                )
-                await session.execute(stmt)
-        await session.commit()
-        await session.close()
-        await logger.info("The operations were recorded successfully")
-
-
-async def asset_record(engine: AsyncEngine, accounts: list):
-    async with engine.begin() as session:
-        # TODO: написать нормальную реализацию, а не словарь
-        types = {
-            "share": 1,
-            "bond": 2,
-            "currency": 3,
-            "etf": 4,
-            "future": 5,
-            "option": 6,
-        }
-        for i in accounts:
-            try:
-                assets = BrokerDataAdapterTinkoff(i[0]).get_assets()
-            except Exception as e:
-                assets = []
-                await logger.error("Recording operations", "\n", e)
-            for elem in assets:
-                stmt = insert(asset).values(
-                    user_id=i[1],
-                    price=elem.price,
-                    figi=elem.figi,
-                    instrument_type=types[elem.asset_type],
-                    count=elem.count,
-                    date=datetime.now().replace(tzinfo=None),
-                )
-                await session.execute(stmt)
-        await session.commit()
-        await session.close()
-        await logger.info("Data on open positions has been recorded successfully")
-
+    async def receiving_and_recording_asset_data(
+        self,
+        token: str,
+        user_id: int,
+    ):
+        assets = await BrokerDataAdapterTinkoff(token).get_assets()
+        for i in assets:
+            request = await requests.post(
+                url=f"{self.url}/asset/post",
+                cookies=self.cookies,
+                data=UsersAsset(
+                    user_id=user_id,
+                    figi=i.figi,
+                    name=i.name,
+                    asset_type=i.asset_type,
+                    price=i.price,
+                    count=i.count,
+                ),
+            )
+            if request.status_code != 201:
+                await logger.error(user_id, i, "the asset was not recorded")
+                # TODO: придумать, куда класть незаписанные данные, чтобы позже их обработать

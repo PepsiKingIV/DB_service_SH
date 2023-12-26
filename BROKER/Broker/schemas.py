@@ -33,3 +33,18 @@ class Payment_date(BaseModel):
     figi: str
     date: datetime
     amount: float
+
+
+class RequestOperationSuper(BaseModel):
+    user_id: int
+    buy: bool
+    price: float
+    figi: str
+    count: int
+    date: datetime
+    justification: str | None = None
+    expectations: str | None = None
+
+
+class UsersAsset(Asset):
+    user_id = int
