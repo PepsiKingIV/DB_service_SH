@@ -12,9 +12,9 @@ from sqlalchemy import (
     CheckConstraint,
     ForeignKey,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, declarative_base
 from database import metadata
+
 
 Base = declarative_base()
 
@@ -42,5 +42,3 @@ user = Table(
     Column("is_superuser", Boolean(), default=False, nullable=False),
     Column("is_verified", Boolean(), default=False, nullable=False),
 )
-
-

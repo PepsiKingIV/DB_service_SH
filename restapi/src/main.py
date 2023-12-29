@@ -1,13 +1,10 @@
 from fastapi import FastAPI
 from fastapi_users import FastAPIUsers
-
-# from Broker.data_recording import process
 from auth.manager import get_user_manager
 from auth.models import User
 from datetime import timedelta
 from auth.schemas import UserCreate, UserRead
 from database import get_async_session, engine
-import asyncio
 from auth.auth import auth_backend
 from operation.routes import route as operation_route
 from asset.routes import route as asset_route
@@ -48,3 +45,6 @@ app.include_router(router=operation_route)
 app.include_router(router=asset_route)
 
 app.include_router(router=user_route)
+
+
+    

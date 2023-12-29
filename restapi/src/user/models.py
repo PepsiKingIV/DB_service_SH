@@ -1,4 +1,3 @@
-from datetime import datetime
 from database import metadata
 from sqlalchemy import (
     MetaData,
@@ -12,6 +11,13 @@ from sqlalchemy import (
     ForeignKey,
 )
 
+instrument = Table(
+    "instrument",
+    metadata,
+    Column("id", Integer(), primary_key=True),
+    Column("type_name", String(), nullable=False),
+)
+
 asset_ratio = Table(
     "asset_ratio",
     metadata,
@@ -21,9 +27,9 @@ asset_ratio = Table(
     Column("name", String(50), nullable=True),
     Column("figi", String(50), nullable=True),
     Column(
-        "instrument_type_id",
+        "instrument",
         Integer(),
-        ForeignKey("instrument_types.id"),
+        ForeignKey("instrument.id"),
         nullable=False,
     ),
 )

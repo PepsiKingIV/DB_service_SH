@@ -5,8 +5,7 @@ from sqlalchemy import select, insert, delete, update
 from auth.manager import get_user_manager
 from auth.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
-from user.models import asset_ratio
-from asset.models import instrument_types
+from user.models import asset_ratio, instrument
 from user.schemas import (
     ProfileResponse,
     RatioRequest,
@@ -15,7 +14,6 @@ from user.schemas import (
     Instrument_ratio,
 )
 from auth.models import user
-from user.service import amount_interest_checking
 
 from database import get_async_session
 
@@ -70,7 +68,7 @@ async def instrument_list(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ) -> list[Instruments]:
-    query = select(instrument_types.c.id, instrument_types.c.type_name)
+    query = select(instrument.c.id, instrument.c.type_name)
     result = await session.execute(query)
     await session.commit()
     return result.all()
@@ -117,9 +115,9 @@ async def get_ratio(
     user: User = Depends(c_user),
 ) -> list[Instrument_ratio]:
     query = (
-        select(instrument_types.c.type_name, asset_ratio.c.ratio, asset_ratio.c.id)
+        select(instrument.c.type_name, asset_ratio.c.ratio, asset_ratio.c.id)
         .select_from(asset_ratio)
-        .join(instrument_types)
+        .join(instrument)
         .where(asset_ratio.c.user_id == user.id)
     )
     result = await session.execute(query)
