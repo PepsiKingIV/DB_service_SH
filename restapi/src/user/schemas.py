@@ -9,14 +9,14 @@ class ProfileResponse(BaseModel):
 
 class RatioRequest(BaseModel):
     instrument_id: int
-    ratio: float
+    ratio: float 
     name: str | None = None
     figi: str | None = None
 
 
 class UsersTokens(BaseModel):
     id: int
-    username: str | None = None
+    username: str
     tinkoff_invest_token: str | None = None
 
 

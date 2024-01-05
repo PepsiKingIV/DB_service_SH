@@ -1,5 +1,7 @@
+from typing import Annotated, List, Union
+from pydantic import Field
 from auth.auth import auth_backend
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query, status
 from fastapi_users import FastAPIUsers
 from sqlalchemy import select, insert, delete, update
 from auth.manager import get_user_manager
@@ -40,9 +42,10 @@ async def set_token(
     return {"status_code": 200, "content": "the record has been successfully changed"}
 
 
+# TODO : добавить ограничение на размер строки
 @route.post("/set-username")
 async def set_username(
-    username: str,
+    username: Annotated[str | None, Query(max_length=50)],
     session: AsyncSession = Depends(get_async_session),
     c_user: User = Depends(c_user),
 ):
@@ -59,8 +62,8 @@ async def get_profile(
 ) -> ProfileResponse:
     query = select(user.c.username, user.c.email).where(user.c.id == c_user.id)
     result = await session.execute(query)
-    await session.commit()
-    return result.first()
+    # print(result.all())
+    return result.first()._asdict()
 
 
 @route.get("/instrument-list")
@@ -71,10 +74,13 @@ async def instrument_list(
     query = select(instrument.c.id, instrument.c.type_name)
     result = await session.execute(query)
     await session.commit()
-    return result.all()
+    response = list()
+    for i in result.all():
+        response.append(i._asdict())
+    return response
 
 
-@route.post("/set-ratio")
+@route.post("/set-ratio", status_code=status.HTTP_201_CREATED)
 async def set_instrument_ratio(
     instrument: RatioRequest,
     session: AsyncSession = Depends(get_async_session),
@@ -89,7 +95,7 @@ async def set_instrument_ratio(
         .values(
             user_id=user.id,
             ratio=instrument.ratio,
-            instrument_type_id=instrument.instrument_id,
+            instrument=instrument.instrument_id,
             name=instrument.name,
             figi=instrument.figi,
         )
@@ -103,7 +109,6 @@ async def set_instrument_ratio(
             status_code=422, detail="the specified values cannot be processed"
         )
     return {
-        "status_code": 201,
         "content": "the record was created successfully",
         "record ID": result.first()[0],
     }
@@ -122,11 +127,15 @@ async def get_ratio(
     )
     result = await session.execute(query)
     await session.commit()
-    return result.all()
+    content = list()
+    for i in result.all():
+        content.append(i._asdict())
+    return content
 
 
 @route.put("/ratio-update")
 async def set_instrument_ratio(
+    ratio_id: int,
     instrument: RatioRequest,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
@@ -137,11 +146,11 @@ async def set_instrument_ratio(
         )
     stmt = (
         update(asset_ratio)
-        .where(asset_ratio.c.user_id == user.id)
+        .where(asset_ratio.c.user_id == user.id, asset_ratio.c.id == ratio_id)
         .values(
             user_id=user.id,
             ratio=instrument.ratio,
-            instrument_type_id=instrument.instrument_id,
+            instrument=instrument.instrument_id,
             name=instrument.name,
             figi=instrument.figi,
         )
@@ -193,6 +202,9 @@ async def get_users(
         query = select(user.c.id, user.c.username, user.c.tinkoff_invest_token)
         result = await session.execute(query)
         await session.commit()
-        return result.all()
+        content = list()
+        for i in result.all():
+            content.append(i._asdict())
+        return content
     else:
         return {"status_code": 403, "content": "You are not a super user"}
