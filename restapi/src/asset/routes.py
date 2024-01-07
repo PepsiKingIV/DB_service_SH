@@ -29,7 +29,10 @@ async def get_asset(
     query = select(asset).where(asset.c.user_id == user.id)
     result = await session.execute(query)
     await session.commit()
-    return result.all()
+    content = list()
+    for i in result.all():
+        content.append(i._asdict())
+    return content
 
 
 @route.post("/post")
@@ -52,7 +55,7 @@ async def set_asset(
             user_id=user.id,
             figi=new_asset.figi,
             name=new_asset.name,
-            instrument_type_id=new_asset.instrument_type_id,
+            instrument_id=new_asset.instrument_id,
             price=new_asset.price,
             count=new_asset.count,
             date=new_asset.date.replace(tzinfo=None),
@@ -116,7 +119,7 @@ async def change_asset(
         .values(
             figi=new_asset.figi,
             name=new_asset.name,
-            instrument_type_id=new_asset.instrument_type_id,
+            instrument_id=new_asset.instrument_id,
             price=new_asset.price,
             count=new_asset.count,
             date=new_asset.date.replace(tzinfo=None),
@@ -247,7 +250,7 @@ async def change_asset(
             result = await session.execute(stmt)
             await session.commit()
             id = result.first()[0]
-            if id:  
+            if id:
                 return {
                     "status_code": 200,
                     "content": "the record was successfully updated",

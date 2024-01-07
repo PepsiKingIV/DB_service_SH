@@ -8,8 +8,8 @@ class RequestOperation(BaseModel):
     figi: str
     count: int
     date: datetime
-    justification: str | None = None
-    expectations: str | None = None
+    justification: str | None = ""
+    expectations: str | None = ""
 
 
 class RequestOperationSuper(RequestOperation):

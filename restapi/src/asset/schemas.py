@@ -5,7 +5,7 @@ from datetime import datetime
 class RequestAsset(BaseModel):
     date: datetime
     figi: str
-    instrument_type_id: int
+    instrument_id: int
     name: str
     price: float
     count: int

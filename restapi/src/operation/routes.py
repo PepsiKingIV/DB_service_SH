@@ -1,6 +1,6 @@
 from auth.auth import auth_backend
 from fastapi import APIRouter, Depends
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 from fastapi_users import FastAPIUsers
 from sqlalchemy import select, insert, delete, update
 from auth.manager import get_user_manager
@@ -23,7 +23,7 @@ fastapi_users = FastAPIUsers[User, int](
 c_user = fastapi_users.current_user()  # c_user = current_user
 
 
-@route.post("/post")
+@route.post("/post", status_code=status.HTTP_201_CREATED)
 async def set_operations(
     new_operation: RequestOperation,
     session: AsyncSession = Depends(get_async_session),
@@ -31,12 +31,12 @@ async def set_operations(
 ):
     if new_operation.count < 1:
         raise HTTPException(
-            status_code=404,
+            status_code=422,
             detail="The negative number 'count' is specified. (must be greater than zero)",
         )
     if new_operation.price <= 0:
         raise HTTPException(
-            status_code=404,
+            status_code=422,
             detail="A non-positive 'price' number is specified. (must be greater than zero)",
         )
     stmt = (
@@ -69,25 +69,28 @@ async def get_operations(
     query = select(operation).where(operation.c.user_id == user.id)
     result = await session.execute(query)
     await session.commit()
-    return result.all()
+    content = list()
+    for i in result.all():
+        content.append(i._asdict())
+    return content
 
 
 @route.delete("/delete")
 async def delete_operation(
-    operation: int,
+    operation_id: int,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
     stmt = (
         delete(operation)
-        .where(operation.c.id == operation.id)
+        .where(operation.c.id == operation_id)
         .returning(operation.c.id)
     ).returning(operation.c.id)
     result = await session.execute(stmt)
     await session.commit()
     record = result.first()
     id = record[0] if record else None
-    if result.first():
+    if record:
         return {
             "status_code": 200,
             "content": "the record was successfully deleted",
@@ -108,12 +111,12 @@ async def change_operation(
 ):
     if new_operation.count < 1:
         raise HTTPException(
-            status_code=404,
+            status_code=422,
             detail="The negative number 'count' is specified. (must be greater than zero)",
         )
     if new_operation.price <= 0:
         raise HTTPException(
-            status_code=404,
+            status_code=422,
             detail="A non-positive 'price' number is specified. (must be greater than zero)",
         )
     stmt = (
@@ -151,12 +154,12 @@ async def set_operations(
 ):
     if new_operation.count < 1:
         raise HTTPException(
-            status_code=404,
+            status_code=422,
             detail="The negative number 'count' is specified. (must be greater than zero)",
         )
     if new_operation.price <= 0:
         raise HTTPException(
-            status_code=404,
+            status_code=422,
             detail="A non-positive 'price' number is specified. (must be greater than zero)",
         )
     if user.is_superuser:
@@ -194,12 +197,12 @@ async def change_operation(
 ):
     if new_operation.count < 1:
         raise HTTPException(
-            status_code=404,
+            status_code=422,
             detail="The negative number 'count' is specified. (must be greater than zero)",
         )
     if new_operation.price <= 0:
         raise HTTPException(
-            status_code=404,
+            status_code=422,
             detail="A non-positive 'price' number is specified. (must be greater than zero)",
         )
     if user.is_superuser:
