@@ -314,7 +314,7 @@ class TestDelete:
             cookies={"operations": LOGIN_COOKIES},
         )
         print(response.content)
-        assert response.status_code == 200
+        assert response.status_code == 204
 
     async def test_non_existent_record(self, ac: AsyncClient):
         response = await ac.delete(
@@ -330,7 +330,7 @@ class TestDelete:
             params={"operation_id": "3"},
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        assert response.status_code == 204
 
 
 class TestPut:
@@ -351,7 +351,7 @@ class TestPut:
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
 
     async def test_str_price(self, ac: AsyncClient):
         response = await ac.put(
@@ -371,7 +371,7 @@ class TestPut:
             cookies={"operations": LOGIN_COOKIES},
         )
         print(response.content)
-        assert response.status_code == 200
+        assert response.status_code == 202
 
     async def test_str_count(self, ac: AsyncClient):
         response = await ac.put(
@@ -391,7 +391,7 @@ class TestPut:
             cookies={"operations": LOGIN_COOKIES},
         )
         print(response.content)
-        assert response.status_code == 200
+        assert response.status_code == 202
 
     async def test_int_figi(self, ac: AsyncClient):
         response = await ac.put(
@@ -410,7 +410,7 @@ class TestPut:
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
 
     async def test_without_date(self, ac: AsyncClient):
         response = await ac.put(
@@ -447,7 +447,7 @@ class TestPut:
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
 
     async def test_without_timezone_date(self, ac: AsyncClient):
         response = await ac.put(
@@ -466,7 +466,7 @@ class TestPut:
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
 
     async def test_without_justification(self, ac: AsyncClient):
         response = await ac.put(
@@ -484,13 +484,13 @@ class TestPut:
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
 
     async def test_without_expectations(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
             json={
-                "new_opeartion": {
+                "new_operation": {
                     "buy": True,
                     "price": 111,
                     "figi": "47128802",
@@ -502,7 +502,8 @@ class TestPut:
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        print(response.content)
+        assert response.status_code == 202
 
     async def test_large_price(self, ac: AsyncClient):
         response = await ac.put(

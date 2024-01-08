@@ -30,16 +30,6 @@ async def set_operations(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    if new_operation.count < 1:
-        raise HTTPException(
-            status_code=422,
-            detail="The negative number 'count' is specified. (must be greater than zero)",
-        )
-    if new_operation.price <= 0:
-        raise HTTPException(
-            status_code=422,
-            detail="A non-positive 'price' number is specified. (must be greater than zero)",
-        )
     stmt = (
         insert(operation)
         .values(
@@ -57,7 +47,6 @@ async def set_operations(
     record = result.first()
     id = record[0] if record else None
     return {
-        "status_code": 201,
         "content": "the record was created successfully",
         "record ID": id,
     }
@@ -76,7 +65,7 @@ async def get_operations(
     return content
 
 
-@route.delete("/delete")
+@route.delete("/delete", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_operation(
     operation_id: int,
     session: AsyncSession = Depends(get_async_session),
@@ -92,34 +81,21 @@ async def delete_operation(
     record = result.first()
     id = record[0] if record else None
     if record:
-        return {
-            "status_code": 200,
-            "content": "the record was successfully deleted",
-            "record ID": id,
-        }
+        return
     else:
         raise HTTPException(
-            status_code=404, detail="there is no record with the specified number"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="there is no record with the specified number",
         )
 
 
-@route.put("/put")
+@route.put("/put", status_code=status.HTTP_202_ACCEPTED)
 async def change_operation(
     operation_id: Annotated[int, Body()],
     new_operation: RequestOperation,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    if new_operation.count < 1:
-        raise HTTPException(
-            status_code=422,
-            detail="The negative number 'count' is specified. (must be greater than zero)",
-        )
-    if new_operation.price <= 0:
-        raise HTTPException(
-            status_code=422,
-            detail="A non-positive 'price' number is specified. (must be greater than zero)",
-        )
     stmt = (
         update(operation)
         .where(operation.c.id == operation_id, operation.c.user_id == user.id)
@@ -137,32 +113,22 @@ async def change_operation(
     id = record[0] if record else None
     if id:
         return {
-            "status_code": 200,
             "content": "the record has been successfully changed",
             "record ID": id,
         }
     else:
         raise HTTPException(
-            status_code=404, detail="there is no record with the specified number"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="there is no record with the specified number",
         )
 
 
-@route.post("/post_super")
+@route.post("/post_super", status_code=status.HTTP_202_ACCEPTED)
 async def set_operations(
     new_operation: RequestOperationSuper,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    if new_operation.count < 1:
-        raise HTTPException(
-            status_code=422,
-            detail="The negative number 'count' is specified. (must be greater than zero)",
-        )
-    if new_operation.price <= 0:
-        raise HTTPException(
-            status_code=422,
-            detail="A non-positive 'price' number is specified. (must be greater than zero)",
-        )
     if user.is_superuser:
         stmt = (
             insert(operation)
@@ -181,31 +147,22 @@ async def set_operations(
         record = result.first()
         id = record[0] if record else None
         return {
-            "status_code": 201,
             "content": "the record was created successfully",
             "record ID": id,
         }
     else:
-        return {"status_code": 403, "content": "You are not a super user"}
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a super user"
+        )
 
 
-@route.put("/put_super")
+@route.put("/put_super", status_code=status.HTTP_202_ACCEPTED)
 async def change_operation(
     operation_id: int,
     new_operation: RequestOperationSuper,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    if new_operation.count < 1:
-        raise HTTPException(
-            status_code=422,
-            detail="The negative number 'count' is specified. (must be greater than zero)",
-        )
-    if new_operation.price <= 0:
-        raise HTTPException(
-            status_code=422,
-            detail="A non-positive 'price' number is specified. (must be greater than zero)",
-        )
     if user.is_superuser:
         stmt = (
             update(operation)
@@ -227,19 +184,21 @@ async def change_operation(
         id = record[0] if record else None
         if id:
             return {
-                "status_code": 200,
                 "content": "the record has been successfully changed",
                 "record ID": id,
             }
         else:
             raise HTTPException(
-                status_code=404, detail="there is no record with the specified number"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="there is no record with the specified number",
             )
     else:
-        return {"status_code": 403, "content": "You are not a super user"}
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a super user"
+        )
 
 
-@route.delete("/delete_super")
+@route.delete("/delete_super", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_operation(
     operation: int,
     user_id: int,
@@ -255,14 +214,13 @@ async def delete_operation(
         result = await session.execute(stmt)
         await session.commit()
         if result.first():
-            return {
-                "status_code": 200,
-                "content": "the record was successfully deleted",
-            }
+            return
         else:
             raise HTTPException(
                 status_code=404,
                 detail="this user does not have an entry with this number",
             )
     else:
-        return {"status_code": 403, "content": "You are not a super user"}
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a super user"
+        )
