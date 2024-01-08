@@ -83,7 +83,7 @@ class TestPost:
         )
         assert response.status_code == 201
 
-    async def test_without_parametr(self, ac: AsyncClient):
+    async def test_without_parameter(self, ac: AsyncClient):
         without_date = await ac.post(
             "/asset/post",
             json={
@@ -216,6 +216,60 @@ class TestPost:
             cookies={"operations": LOGIN_COOKIES},
         )
         assert response.status_code == 201
+
+    async def test_large_parameter(self, ac: AsyncClient):
+        instrument_id = await ac.post(
+            "/asset/post",
+            json={
+                "date": "2024-01-07T10:01:26.471Z",
+                "figi": "512512521",
+                "instrument_id": 1234567890123456789012345678901234567890123456789012345678901234567890,
+                "name": "YNDX",
+                "price": 2421,
+                "count": 3,
+            },
+            cookies={"operations": LOGIN_COOKIES},
+        )
+        name = await ac.post(
+            "/asset/post",
+            json={
+                "date": "2024-01-07T10:01:26.471Z",
+                "figi": "512512521",
+                "instrument_id": 1,
+                "name": "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+                "price": 2421,
+                "count": 3,
+            },
+            cookies={"operations": LOGIN_COOKIES},
+        )
+        price = await ac.post(
+            "/asset/post",
+            json={
+                "date": "2024-01-07T10:01:26.471Z",
+                "figi": "512512521",
+                "instrument_id": 1,
+                "name": "VKCO",
+                "price": 12345678901234567890123456789012345678901234567890123456789012345678901234567890,
+                "count": 3,
+            },
+            cookies={"operations": LOGIN_COOKIES},
+        )
+        count = await ac.post(
+            "/asset/post",
+            json={
+                "date": "2024-01-07T10:01:26.471Z",
+                "figi": "512512521",
+                "instrument_id": 1,
+                "name": "VKCO",
+                "price": 4121,
+                "count": 12345678901234567890123456789012345678901234567890123456789012345678901234567890,
+            },
+            cookies={"operations": LOGIN_COOKIES},
+        )
+        assert instrument_id.status_code == 422
+        assert name.status_code == 422
+        assert price.status_code == 422
+        assert count.status_code == 422
 
 
 class TestPut:
