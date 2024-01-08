@@ -313,6 +313,7 @@ class TestDelete:
             params={"operation_id": 2},
             cookies={"operations": LOGIN_COOKIES},
         )
+        print(response.content)
         assert response.status_code == 200
 
     async def test_non_existent_record(self, ac: AsyncClient):
@@ -336,15 +337,17 @@ class TestPut:
     async def test_basic_case(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 111,
-                "figi": "string",
-                "count": 111,
-                "date": "2024-01-05T19:35:25.496Z",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 111,
+                    "figi": "string",
+                    "count": 111,
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -353,15 +356,17 @@ class TestPut:
     async def test_str_price(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": "111",
-                "figi": "string",
-                "count": 111,
-                "date": "2024-01-05T19:35:25.496Z",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": "111",
+                    "figi": "string",
+                    "count": 111,
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -371,15 +376,17 @@ class TestPut:
     async def test_str_count(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 111,
-                "figi": "string",
-                "count": "111",
-                "date": "2024-01-05T19:35:25.496Z",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 111,
+                    "figi": "string",
+                    "count": "111",
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -389,15 +396,17 @@ class TestPut:
     async def test_int_figi(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 111,
-                "figi": 47128802,
-                "count": 111,
-                "date": "2024-01-05T19:35:25.496Z",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 111,
+                    "figi": 47128802,
+                    "count": 111,
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -406,14 +415,16 @@ class TestPut:
     async def test_without_date(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 111,
-                "figi": "47128802",
-                "count": 111,
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 111,
+                    "figi": "47128802",
+                    "count": 111,
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -422,15 +433,17 @@ class TestPut:
     async def test_without_timezone_date(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 111,
-                "figi": "47128802",
-                "count": 111,
-                "date": "2024-01-05T19:35:25.496",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 111,
+                    "figi": "47128802",
+                    "count": 111,
+                    "date": "2024-01-05T19:35:25.496",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -439,15 +452,17 @@ class TestPut:
     async def test_without_timezone_date(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 111,
-                "figi": "47128802",
-                "count": 111,
-                "date": "2024-01-05T19:35:25.496",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 111,
+                    "figi": "47128802",
+                    "count": 111,
+                    "date": "2024-01-05T19:35:25.496",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -456,14 +471,16 @@ class TestPut:
     async def test_without_justification(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 111,
-                "figi": "47128802",
-                "count": 111,
-                "date": "2024-01-05T19:35:25.496Z",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 111,
+                    "figi": "47128802",
+                    "count": 111,
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -472,14 +489,16 @@ class TestPut:
     async def test_without_expectations(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 111,
-                "figi": "47128802",
-                "count": 111,
-                "date": "2024-01-05T19:35:25.496Z",
-                "justification": "string",
+                "new_opeartion": {
+                    "buy": True,
+                    "price": 111,
+                    "figi": "47128802",
+                    "count": 111,
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "justification": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -488,15 +507,17 @@ class TestPut:
     async def test_large_price(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,
-                "figi": "47128802",
-                "count": 111,
-                "date": "2024-01-05T19:35:25.496Z",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,
+                    "figi": "47128802",
+                    "count": 111,
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -505,15 +526,17 @@ class TestPut:
     async def test_large_count(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 123456,
-                "figi": "47128802",
-                "count": 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,
-                "date": "2024-01-05T19:35:25.496Z",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 123456,
+                    "figi": "47128802",
+                    "count": 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -522,15 +545,17 @@ class TestPut:
     async def test_large_figi(self, ac: AsyncClient):
         response = await ac.put(
             "/operation/put",
-            params={"operation_id": 1},
             json={
-                "buy": True,
-                "price": 123456,
-                "figi": "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
-                "count": 3,
-                "date": "2024-01-05T19:35:25.496Z",
-                "justification": "string",
-                "expectations": "string",
+                "new_operation": {
+                    "buy": True,
+                    "price": 123456,
+                    "figi": "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+                    "count": 3,
+                    "date": "2024-01-05T19:35:25.496Z",
+                    "justification": "string",
+                    "expectations": "string",
+                },
+                "operation_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )

@@ -1,5 +1,6 @@
+from typing import Annotated
 from auth.auth import auth_backend
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from fastapi import APIRouter, status
 from fastapi_users import FastAPIUsers
 from sqlalchemy import select, insert, delete, update
@@ -104,7 +105,7 @@ async def delete_operation(
 
 @route.put("/put")
 async def change_operation(
-    operation_id: int,
+    operation_id: Annotated[int, Body()],
     new_operation: RequestOperation,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
