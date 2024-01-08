@@ -1,6 +1,6 @@
+from typing import Annotated
 from auth.auth import auth_backend
-from fastapi import APIRouter, Depends
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi_users import FastAPIUsers
 from sqlalchemy import select, insert, delete, update
 from auth.manager import get_user_manager
@@ -35,7 +35,7 @@ async def get_asset(
     return content
 
 
-@route.post("/post")
+@route.post("/post", status_code=status.HTTP_201_CREATED)
 async def set_asset(
     new_asset: RequestAsset,
     session: AsyncSession = Depends(get_async_session),
@@ -43,11 +43,13 @@ async def set_asset(
 ):
     if new_asset.count < 1:
         raise HTTPException(
-            status_code=422, detail="the value of 'count' must be greater than zero"
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="the value of 'count' must be greater than zero",
         )
     if new_asset.price <= 0:
         raise HTTPException(
-            status_code=422, detail="the value of 'price' must be greater than zero"
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="the value of 'price' must be greater than zero",
         )
     stmt = (
         insert(asset)
@@ -65,15 +67,14 @@ async def set_asset(
     result = await session.execute(stmt)
     await session.commit()
     return {
-        "status_code": 201,
         "content": "the record was created successfully",
         "record ID": result.first()[0],
     }
 
 
-@route.delete("/delete")
+@route.delete("/delete", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_asset(
-    asset_id: int,
+    asset_id: Annotated[int, Body()],
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
@@ -83,35 +84,35 @@ async def delete_asset(
         await session.commit()
         id = result.first()[0]
         if id:
-            return {
-                "status_code": 200,
-                "content": "the record has been successfully deleted",
-                "record ID": id,
-            }
+            return
         else:
             raise HTTPException(
-                status_code=404, detail="there is no record with the specified number"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="there is no record with the specified number",
             )
     except Exception as e:
         raise HTTPException(
-            status_code=422, detail="the specified values cannot be processed"
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="the specified values cannot be processed",
         )
 
 
-@route.put("/put")
+@route.put("/put", status_code=status.HTTP_202_ACCEPTED)
 async def change_asset(
-    asset_id: int,
+    asset_id: Annotated[int, Body()],
     new_asset: RequestAsset,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
     if new_asset.count < 1:
         raise HTTPException(
-            status_code=422, detail="the value of 'count' must be greater than zero"
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="the value of 'count' must be greater than zero",
         )
     if new_asset.price <= 0:
         raise HTTPException(
-            status_code=422, detail="the value of 'price' must be greater than zero"
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="the value of 'price' must be greater than zero",
         )
     stmt = (
         update(asset)
@@ -131,21 +132,22 @@ async def change_asset(
         id = result.first()[0]
         if id:
             return {
-                "status_code": 200,
                 "content": "the record has been successfully changed",
                 "record ID": id,
             }
         else:
             raise HTTPException(
-                status_code=404, detail="there is no record with the specified number"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="there is no record with the specified number",
             )
     except Exception as e:
         raise HTTPException(
-            status_code=422, detail="the specified values cannot be processed"
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="the specified values cannot be processed",
         )
 
 
-@route.post("/post_super")
+@route.post("/post_super", status_code=status.HTTP_201_CREATED)
 async def set_asset(
     new_asset: RequestAssetSuper,
     session: AsyncSession = Depends(get_async_session),
@@ -154,11 +156,13 @@ async def set_asset(
     if user.is_superuser:
         if new_asset.count < 1:
             raise HTTPException(
-                status_code=422, detail="the value of 'count' must be greater than zero"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="the value of 'count' must be greater than zero",
             )
         if new_asset.price <= 0:
             raise HTTPException(
-                status_code=422, detail="the value of 'price' must be greater than zero"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="the value of 'price' must be greater than zero",
             )
         stmt = (
             insert(asset)
@@ -177,21 +181,23 @@ async def set_asset(
             await session.execute(stmt)
             await session.commit()
             return {
-                "status_code": 201,
                 "content": "the record was created successfully",
             }
         except Exception as e:
             raise HTTPException(
-                status_code=422, detail="the specified values cannot be processed"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="the specified values cannot be processed",
             )
     else:
-        return {"status_code": 403, "content": "You are not a super user"}
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a super user"
+        )
 
 
-@route.delete("/delete_super")
+@route.delete("/delete_super", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_asset(
-    asset_id: int,
-    user_id: int,
+    asset_id: Annotated[int, Body()],
+    user_id: Annotated[int, Body()],
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
@@ -205,22 +211,21 @@ async def delete_asset(
         await session.commit()
         id = result.first()[0]
         if id:
-            return {
-                "status_code": 200,
-                "content": "the record has been successfully deleted",
-                "record ID": id,
-            }
+            return
         else:
             raise HTTPException(
-                status_code=404, detail="there is no record with the specified number"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="there is no record with the specified number",
             )
     else:
-        return {"status_code": 403, "content": "You are not a super user"}
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a super user"
+        )
 
 
-@route.put("/put_super")
+@route.put("/put_super", status_code=status.HTTP_202_ACCEPTED)
 async def change_asset(
-    asset_id: int,
+    asset_id: Annotated[int, Body()],
     new_asset: RequestAssetSuper,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
@@ -228,11 +233,13 @@ async def change_asset(
     if user.is_superuser:
         if new_asset.count < 1:
             raise HTTPException(
-                status_code=422, detail="the value of 'count' must be greater than zero"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="the value of 'count' must be greater than zero",
             )
         if new_asset.price <= 0:
             raise HTTPException(
-                status_code=422, detail="the value of 'price' must be greater than zero"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="the value of 'price' must be greater than zero",
             )
         stmt = (
             update(asset)
@@ -252,18 +259,20 @@ async def change_asset(
             id = result.first()[0]
             if id:
                 return {
-                    "status_code": 200,
                     "content": "the record was successfully updated",
                     "redord ID": id,
                 }
             else:
                 raise HTTPException(
-                    status_code=404,
+                    status_code=status.HTTP_404_NOT_FOUND,
                     detail="there is no record with the specified number",
                 )
         except Exception as e:
             raise HTTPException(
-                status_code=404, detail="the specified values cannot be processed"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="the specified values cannot be processed",
             )
     else:
-        return {"status_code": 403, "content": "You are not a super user"}
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a super user"
+        )

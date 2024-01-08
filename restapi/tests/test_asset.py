@@ -222,89 +222,103 @@ class TestPut:
     async def test_basic_case(self, ac: AsyncClient):
         response = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": "st2r3i3n5g",
-                "instrument_id": 1,
-                "name": "VKCO",
-                "price": 3431,
-                "count": 4,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": "st2r3i3n5g",
+                    "instrument_id": 1,
+                    "name": "VKCO",
+                    "price": 3431,
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
 
     async def test_without_parameter(self, ac: AsyncClient):
         without_date = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "figi": "st2r3i3n5g",
-                "instrument_id": 1,
-                "name": "VKCO",
-                "price": 3431,
-                "count": 4,
+                "new_asset": {
+                    "figi": "st2r3i3n5g",
+                    "instrument_id": 1,
+                    "name": "VKCO",
+                    "price": 3431,
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
         without_figi = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "instrument_id": 1,
-                "name": "VKCO",
-                "price": 3431,
-                "count": 4,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "instrument_id": 1,
+                    "name": "VKCO",
+                    "price": 3431,
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
         without_instrument_id = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": "st2r3i3n5g",
-                "name": "VKCO",
-                "price": 3431,
-                "count": 4,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": "st2r3i3n5g",
+                    "name": "VKCO",
+                    "price": 3431,
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
         without_name = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": "st2r3i3n5g",
-                "instrument_id": 1,
-                "price": 3431,
-                "count": 4,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": "st2r3i3n5g",
+                    "instrument_id": 1,
+                    "price": 3431,
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
         without_price = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": "st2r3i3n5g",
-                "instrument_id": 1,
-                "name": "VKCO",
-                "count": 4,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": "st2r3i3n5g",
+                    "instrument_id": 1,
+                    "name": "VKCO",
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
         without_count = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": "st2r3i3n5g",
-                "instrument_id": 1,
-                "name": "VKCO",
-                "price": 3431,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": "st2r3i3n5g",
+                    "instrument_id": 1,
+                    "name": "VKCO",
+                    "price": 3431,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -318,60 +332,68 @@ class TestPut:
     async def test_types(self, ac: AsyncClient):
         int_figi = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": 1231231,
-                "instrument_id": 1,
-                "name": "VKCO",
-                "price": 3431,
-                "count": 4,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": 1231231,
+                    "instrument_id": 1,
+                    "name": "VKCO",
+                    "price": 3431,
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
         str_instrument_id = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": "1231231",
-                "instrument_id": "1",
-                "name": "VKCO",
-                "price": 3431,
-                "count": 4,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": "1231231",
+                    "instrument_id": "1",
+                    "name": "VKCO",
+                    "price": 3431,
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
         str_price = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": "1231231",
-                "instrument_id": 1,
-                "name": "VKCO",
-                "price": "3431",
-                "count": 4,
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": "1231231",
+                    "instrument_id": 1,
+                    "name": "VKCO",
+                    "price": "3431",
+                    "count": 4,
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
         str_count = await ac.put(
             "/asset/put",
-            params={"asset_id": 1},
             json={
-                "date": "2024-01-07T10:01:26.471",
-                "figi": "1231231",
-                "instrument_id": 1,
-                "name": "VKCO",
-                "price": 3431,
-                "count": "4",
+                "new_asset": {
+                    "date": "2024-01-07T10:01:26.471",
+                    "figi": "1231231",
+                    "instrument_id": 1,
+                    "name": "VKCO",
+                    "price": 3431,
+                    "count": "4",
+                },
+                "asset_id": 1,
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert str_count.status_code == 200
-        assert str_instrument_id.status_code == 200
-        assert str_price.status_code == 200
-        assert int_figi.status_code == 200
+        assert str_count.status_code == 202
+        assert str_instrument_id.status_code == 202
+        assert str_price.status_code == 202
+        assert int_figi.status_code == 202
 
 
 class TestDelete:
