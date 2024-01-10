@@ -41,16 +41,6 @@ async def set_asset(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    if new_asset.count < 1:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="the value of 'count' must be greater than zero",
-        )
-    if new_asset.price <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="the value of 'price' must be greater than zero",
-        )
     stmt = (
         insert(asset)
         .values(
@@ -104,16 +94,6 @@ async def change_asset(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
-    if new_asset.count < 1:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="the value of 'count' must be greater than zero",
-        )
-    if new_asset.price <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="the value of 'price' must be greater than zero",
-        )
     stmt = (
         update(asset)
         .where(asset.c.id == asset_id, asset.c.user_id == user.id)
@@ -147,23 +127,13 @@ async def change_asset(
         )
 
 
-@route.post("/post_super", status_code=status.HTTP_201_CREATED)
+@route.post("/post-super", status_code=status.HTTP_201_CREATED)
 async def set_asset(
     new_asset: RequestAssetSuper,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(c_user),
 ):
     if user.is_superuser:
-        if new_asset.count < 1:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="the value of 'count' must be greater than zero",
-            )
-        if new_asset.price <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="the value of 'price' must be greater than zero",
-            )
         stmt = (
             insert(asset)
             .values(
@@ -194,7 +164,7 @@ async def set_asset(
         )
 
 
-@route.delete("/delete_super", status_code=status.HTTP_204_NO_CONTENT)
+@route.delete("/delete-super", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_asset(
     asset_id: Annotated[int, Body()],
     user_id: Annotated[int, Body()],
@@ -223,7 +193,7 @@ async def delete_asset(
         )
 
 
-@route.put("/put_super", status_code=status.HTTP_202_ACCEPTED)
+@route.put("/put-super", status_code=status.HTTP_202_ACCEPTED)
 async def change_asset(
     asset_id: Annotated[int, Body()],
     new_asset: RequestAssetSuper,
@@ -231,16 +201,6 @@ async def change_asset(
     user: User = Depends(c_user),
 ):
     if user.is_superuser:
-        if new_asset.count < 1:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="the value of 'count' must be greater than zero",
-            )
-        if new_asset.price <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="the value of 'price' must be greater than zero",
-            )
         stmt = (
             update(asset)
             .where(asset.c.id == asset_id, asset.c.user_id == new_asset.user_id)

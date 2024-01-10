@@ -1,5 +1,5 @@
-from typing import Optional
-from pydantic import BaseModel
+from typing import Annotated, Optional
+from pydantic import BaseModel, Field, validator
 
 from fastapi_users import schemas
 from pydantic import EmailStr
@@ -18,13 +18,19 @@ class UserRead(schemas.BaseUser[int]):
 
 
 class UserCreate(schemas.BaseUserCreate):
-    username: str
-    tinkoff_invest_token: str | None = None
+    username: str = Field(max_length=50)
+    tinkoff_invest_token: str = Field(max_length=200)
     email: EmailStr
     password: str
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
     is_verified: Optional[bool] = False
+
+    @validator("email")
+    def email_validation(cls, email):
+        if len(email) > 50:
+            raise ValueError("the email is too long")
+        return email
 
 
 class UserUpdate(schemas.BaseUserUpdate):

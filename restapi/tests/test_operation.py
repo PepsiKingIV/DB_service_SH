@@ -85,9 +85,6 @@ async def add_user(ac: AsyncClient):
     yield
 
 
-# TODO : добавить проверку на размер входных данных
-
-
 class TestGet:
     async def test_basic_case(self, ac: AsyncClient):
         response = await ac.get(

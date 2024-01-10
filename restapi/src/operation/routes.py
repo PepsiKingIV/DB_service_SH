@@ -123,7 +123,7 @@ async def change_operation(
         )
 
 
-@route.post("/post_super", status_code=status.HTTP_202_ACCEPTED)
+@route.post("/post-super", status_code=status.HTTP_202_ACCEPTED)
 async def set_operations(
     new_operation: RequestOperationSuper,
     session: AsyncSession = Depends(get_async_session),
@@ -156,7 +156,7 @@ async def set_operations(
         )
 
 
-@route.put("/put_super", status_code=status.HTTP_202_ACCEPTED)
+@route.put("/put-super", status_code=status.HTTP_202_ACCEPTED)
 async def change_operation(
     operation_id: int,
     new_operation: RequestOperationSuper,
@@ -198,7 +198,7 @@ async def change_operation(
         )
 
 
-@route.delete("/delete_super", status_code=status.HTTP_204_NO_CONTENT)
+@route.delete("/delete-super", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_operation(
     operation: int,
     user_id: int,

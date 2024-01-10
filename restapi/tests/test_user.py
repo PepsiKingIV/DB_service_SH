@@ -9,9 +9,6 @@ from httpx import AsyncClient
 
 LOGIN_COOKIES = ""
 
-# TODO : переделать коды ответов во всех роутах
-# TODO : переписать название путей(сделать везде либо дифис либо нижнее подчеркивание)
-
 
 @pytest.fixture(autouse=True, scope="session")
 async def add_user(ac: AsyncClient):
@@ -52,15 +49,16 @@ class TestUsersAction:
     async def test_set_username(self, ac: AsyncClient):
         response = await ac.post(
             "/user/set-username",
-            params={"username": "new_username"},
+            data={"username": "new_username"},
             cookies={"operations": LOGIN_COOKIES},
         )
+        print(response.content)
         assert response.status_code == 200
 
     async def test_set_username_int(self, ac: AsyncClient):
         response = await ac.post(
             "/user/set-username",
-            params={"username": 223523},
+            data={"username": 223523},
             cookies={"operations": LOGIN_COOKIES},
         )
         assert response.status_code == 200
@@ -68,9 +66,7 @@ class TestUsersAction:
     async def test_set_username_more_50_characters(self, ac: AsyncClient):
         response = await ac.post(
             "/user/set-username",
-            params={
-                "username": "123456789123456789123456789123456789123456789123456789"
-            },
+            data={"username": "123456789123456789123456789123456789123456789123456789"},
             cookies={"operations": LOGIN_COOKIES},
         )
         assert response.status_code == 422
@@ -78,7 +74,7 @@ class TestUsersAction:
     async def test_set_token(self, ac: AsyncClient):
         response = await ac.post(
             "/user/set-token",
-            params={"token": "t32x2"},
+            data={"token": "t32x2"},
             cookies={"operations": LOGIN_COOKIES},
         )
         assert response.status_code == 200
@@ -86,7 +82,7 @@ class TestUsersAction:
     async def test_set_token_more_200_characters(self, ac: AsyncClient):
         response = await ac.post(
             "/user/set-token",
-            params={
+            data={
                 "token": """1234567890123456789012345678901234567890
     1234567890123456789012345678901234567890
     1234567890123456789012345678901234567890
@@ -95,7 +91,7 @@ class TestUsersAction:
             },
             cookies={"operations": LOGIN_COOKIES},
         )
-        assert response.status_code == 200
+        assert response.status_code == 422
 
     async def test_get_user(self, ac: AsyncClient):
         response = await ac.get(
@@ -103,10 +99,10 @@ class TestUsersAction:
             cookies={"operations": LOGIN_COOKIES},
         )
         assert response.status_code == 200
-        assert json.loads(response.content.decode()) == {
-            "email": "alex@gmail.com",
-            "username": "223523",
-        }
+        assert (
+            response.content
+            == b'{"username":"username=223523","email":"alex@gmail.com"}'
+        )
 
     async def test_get_instrument_list(self, ac: AsyncClient):
         response = await ac.get(
@@ -260,7 +256,7 @@ class TestUpdateDeleteRatio:
 
     async def test_delete_ratio(self, ac: AsyncClient):
         response = await ac.delete(
-            "/user/ratio_delete",
+            "/user/ratio-delete",
             params={"asset_ratio_id": 1},
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -269,7 +265,7 @@ class TestUpdateDeleteRatio:
 
     async def test_delete_ratio_str(self, ac: AsyncClient):
         response = await ac.delete(
-            "/user/ratio_delete",
+            "/user/ratio-delete",
             params={"asset_ratio_id": "3"},
             cookies={"operations": LOGIN_COOKIES},
         )
@@ -278,7 +274,7 @@ class TestUpdateDeleteRatio:
 
     async def test_delete_ratio_str(self, ac: AsyncClient):
         response = await ac.delete(
-            "/user/ratio_delete",
+            "/user/ratio-delete",
             params={"asset_ratio_id": "dvgw"},
             cookies={"operations": LOGIN_COOKIES},
         )

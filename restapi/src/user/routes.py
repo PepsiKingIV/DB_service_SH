@@ -1,7 +1,7 @@
 from typing import Annotated, List, Union
 from pydantic import Field
 from auth.auth import auth_backend
-from fastapi import APIRouter, HTTPException, Depends, Query, status
+from fastapi import APIRouter, Body, HTTPException, Depends, Query, status
 from fastapi_users import FastAPIUsers
 from sqlalchemy import select, insert, delete, update
 from auth.manager import get_user_manager
@@ -32,7 +32,7 @@ c_user = fastapi_users.current_user()  # c_user = current_user
 
 @route.post("/set-token")
 async def set_token(
-    token: str,
+    token: Annotated[str, Body(max_length=200)],
     session: AsyncSession = Depends(get_async_session),
     c_user: User = Depends(c_user),
 ):
@@ -45,7 +45,7 @@ async def set_token(
 # TODO : добавить ограничение на размер строки
 @route.post("/set-username")
 async def set_username(
-    username: Annotated[str | None, Query(max_length=50)],
+    username: Annotated[str, Body(max_length=50)],
     session: AsyncSession = Depends(get_async_session),
     c_user: User = Depends(c_user),
 ):
@@ -170,7 +170,7 @@ async def set_instrument_ratio(
     }
 
 
-@route.delete("/ratio_delete")
+@route.delete("/ratio-delete")
 async def set_instrument_ratio(
     asset_ratio_id: int,
     session: AsyncSession = Depends(get_async_session),
