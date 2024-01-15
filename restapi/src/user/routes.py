@@ -15,8 +15,6 @@ from user.schemas import (
     Instruments,
     Instrument_ratio,
 )
-from auth.models import user
-
 from database import get_async_session
 
 

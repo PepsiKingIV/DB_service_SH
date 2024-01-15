@@ -16,6 +16,7 @@ instrument = Table(
     metadata,
     Column("id", Integer(), primary_key=True),
     Column("type_name", String(), nullable=False),
+    extend_existing=True,
 )
 
 asset_ratio = Table(
@@ -32,4 +33,5 @@ asset_ratio = Table(
         ForeignKey("instrument.id"),
         nullable=False,
     ),
+    extend_existing=True,
 )

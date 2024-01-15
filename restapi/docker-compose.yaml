@@ -1,0 +1,25 @@
+version: '4.16'
+services:
+  db:
+    image: postgres:16
+    container_name: db
+    command: -p 8227
+    expose:
+      - 8227
+    env_file:
+      - .env_prod
+
+  app:
+    build: 
+      context: .
+    env_file:
+      - .env_prod
+    container_name: sheres_report_app
+    command: ["/app/docker/app.sh"]
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+
+
+

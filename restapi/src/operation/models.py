@@ -25,4 +25,5 @@ operation = Table(
     Column("count", Integer(), nullable=False),
     Column("justification", String(), nullable=True),
     Column("expectations", String(), nullable=True),
+    extend_existing=True,
 )

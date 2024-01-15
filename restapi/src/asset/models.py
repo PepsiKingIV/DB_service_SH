@@ -27,4 +27,5 @@ asset = Table(
     Column("price", Float(), nullable=False),
     Column("date", DateTime(), default=datetime.utcnow),
     Column("count", Integer(), nullable=False),
+    extend_existing=True,
 )

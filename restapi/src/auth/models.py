@@ -41,4 +41,5 @@ user = Table(
     Column("is_active", Boolean(), default=True, nullable=False),
     Column("is_superuser", Boolean(), default=False, nullable=False),
     Column("is_verified", Boolean(), default=False, nullable=False),
+    extend_existing=True,
 )
