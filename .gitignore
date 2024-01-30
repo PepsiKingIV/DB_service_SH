@@ -4,3 +4,4 @@ venv/
 __pycache__/
 *.DS_Store
 script_test.sh
+.env_prod
