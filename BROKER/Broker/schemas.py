@@ -48,3 +48,21 @@ class RequestOperationSuper(BaseModel):
 
 class UsersAsset(Asset):
     user_id = int
+
+
+class Urls(BaseModel):
+    authorization_url: str
+    post_operation_url: str
+    post_asset_url: str
+    get_tokens_url: str
+
+
+class SuperUser(BaseModel):
+    password: str
+    email: str
+
+
+class UsersTokens(BaseModel):
+    id: int
+    tinkoff_invest_token: str
+    username: str

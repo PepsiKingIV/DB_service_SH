@@ -1,122 +1,172 @@
+from ast import literal_eval
+import asyncio
+import logging
+import aiohttp
+import requests
+import io
 from datetime import datetime, timedelta
-from tinkoff.invest import Client, InstrumentIdType, OperationState
-from schemas import Operation, Assets_type, Asset, Payment_date
-from Interfaces import IBrokerDataAdapter
+
+from schemas import (
+    RequestOperationSuper,
+    SuperUser,
+    UsersAsset,
+    Urls,
+    UsersTokens,
+)
+from Interfaces import IRecorder
+from Exceptions import LoginException, RequestException
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(f"data_recording.log", mode="w")
+formatter = logging.Formatter("%(name)s %(asctime)s %(levelname)s %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.info(f"Logger for data_rocorder. Start:{datetime.now()}")
 
 
-class BrokerDataAdapterTinkoff(IBrokerDataAdapter):
-    def __init__(self, broker_token: str) -> None:
-        self.broker_token = broker_token
-        self.__enter__()
-        self.id_list = [
-            item.id
-            for item in self.client.users.get_accounts().accounts
-            if item.name != "Инвесткопилка"
-        ]
-        self.assets_dict = {
-            "share": self.client.instruments.share_by,
-            "bond": self.client.instruments.bond_by,
-            "currency": self.client.instruments.currency_by,
-            "etf": self.client.instruments.etf_by,
-            "future": self.client.instruments.future_by,
-            "option": self.client.instruments.option_by,
-        }
+# class Recorder:
+#     def __init__(self, url, email, password) -> None:
+#         self.url = url
+#         self.email = email
+#         self.password = password
 
-    def __enter__(self):
-        self.client = Client(self.broker_token).__enter__()
+#     async def login(self) -> int:
+#         data = {"username": self.email, "password": self.password}
+#         request = await requests.post(f"{self.url}/auth/jwt/login", data=data)
+#         if request.status_code == 200:
+#             cookies = request.cookies.get_dict()
+#             self.cookies = {"operations": cookies}
+#             await logger.info("OperationRecorder has been successfully logged in")
+#             return 0
+#         else:
+#             await logger.error(
+#                 request.status_code,
+#                 "|\t",
+#                 request.content,
+#                 "|\t",
+#                 "OperationRecorder couldn't log in",
+#             )
+#             return 1
 
-    def get_total_assets_cost(self) -> float:
-        total_amount = 0
-        for item in self.id_list:
-            try:
-                for elem in self.client.operations.get_portfolio(
-                    account_id=item
-                ).positions:
-                    total_amount = (
-                        total_amount
-                        + (
-                            elem.current_price.units
-                            + elem.current_price.nano / (10**9)
-                        )
-                        * elem.quantity.units
-                    )
-            except:
-                raise
-        return total_amount
+#     async def receiving_and_recording_operation_data(
+#         self,
+#         token: str,
+#         user_id: int,
+#         date_from: datetime | None = datetime.now() - timedelta(days=120),
+#         date_to: datetime | None = datetime.now(),
+#     ):
+#         operations = await BrokerDataAdapterTinkoff(token).get_operations(
+#             date_from=date_from, date_to=date_to
+#         )
+#         for i in operations:
+#             request = await requests.post(
+#                 f"{self.url}/operation/post_super",
+#                 data=RequestOperationSuper(
+#                     user_id=user_id,
+#                     buy=i.buy,
+#                     price=i.price,
+#                     figi=i.figi,
+#                     count=i.count,
+#                     date=i.date,
+#                 ),
+#                 cookies=self.cookies,
+#             )
+#             if request.status_code != 201:
+#                 await logger.error(user_id, i, "the operation was not recorded")
+#                 # TODO: придумать, куда класть незаписанные данные, чтобы позже их обработать
 
-    def get_asset_cost(self, figi: str) -> float:
-        try:
-            asset = self.client.market_data.get_last_prices(figi=[figi]).last_prices[-1]
-        except:
-            raise
-        return asset.price.units + asset.price.nano / (10**9)
+#     async def receiving_and_recording_asset_data(
+#         self,
+#         token: str,
+#         user_id: int,
+#     ):
+#         assets = await BrokerDataAdapterTinkoff(token).get_assets()
+#         for i in assets:
+#             request = await requests.post(
+#                 url=f"{self.url}/asset/post",
+#                 cookies=self.cookies,
+#                 data=UsersAsset(
+#                     user_id=user_id,
+#                     figi=i.figi,
+#                     name=i.name,
+#                     asset_type=i.asset_type,
+#                     price=i.price,
+#                     count=i.count,
+#                 ),
+#             )
+#             if request.status_code != 201:
+#                 await logger.error(user_id, i, "the asset was not recorded")
+#                 # TODO: придумать, куда класть незаписанные данные, чтобы позже их обработать
 
-    def get_assets(self) -> list[Asset]:
-        assets = []
-        for item in self.id_list:
-            try:
-                for elem in self.client.operations.get_portfolio(
-                    account_id=item
-                ).positions:
-                    asset = self.assets_dict[elem.instrument_type](
-                        id_type=InstrumentIdType(1), id=elem.figi
-                    ).instrument
-                    asset_price = self.get_asset_cost(elem.figi)
-                    assets.append(
-                        Asset(
-                            figi=asset.figi,
-                            name=asset.name,
-                            asset_type=elem.instrument_type,
-                            price=asset_price,
-                            count=elem.quantity_lots.units,
-                        )
-                    )
-            except:
-                raise
-        return assets
 
-    def get_operations(
+class AsyncRecorder(IRecorder):
+    _users: list[UsersTokens] = list()
+    _cookies: dict = None
+
+    def __init__(
         self,
-        date_from: datetime | None = datetime.now() - timedelta(days=120),
-        date_to: datetime | None = datetime.now(),
-    ) -> list[Operation]:
-        operations = []
-        for item in self.id_list:
-            try:
-                for elem in self.client.operations.get_operations(
-                    account_id=item,
-                    from_=date_from,
-                    to=date_to,
-                    state=OperationState(2),
-                ).operations:
-                    asset = self.assets_dict[elem.instrument_type](
-                        id_type=InstrumentIdType(1), id=elem.figi
-                    ).instrument
-                    operations.append(
-                        Operation(
-                            figi=elem.figi,
-                            name=asset.name,
-                            date=elem.date,
-                            count=elem.quantity,
-                            price=elem.price.units + elem.price.nano / (10**9),
-                            buy=True if elem.operation_type == 15 else False,
-                        )
+        urls: Urls,
+        super_user: SuperUser,
+    ):
+        self._authorization_url: str = urls.authorization_url
+        self._post_operation_url: str = urls.post_operation_url
+        self._post_asset_url: str = urls.post_asset_url
+        self._get_tokens_url: str = urls.get_tokens_url
+        self._super_user: SuperUser = super_user
+
+    async def authorization(self) -> None:
+        async with aiohttp.ClientSession() as session:
+            data = {
+                "password": self._super_user.password,
+                "username": self._super_user.email,
+            }
+            async with session.post(
+                url=self._authorization_url,
+                data=data,
+                timeout=aiohttp.ClientTimeout(total=1),
+            ) as result:
+                if result.status == 204:
+                    self._cookies = {"operations": result.headers["Set-Cookie"][11:168]}
+                else:
+                    raise LoginException(
+                        f"Не удалось войти в аккаунт. status_code:{result.status}",
                     )
-            except:
-                raise
-        return operations
 
-    def get_payment_date(
-        self, date_from: datetime, date_to: datetime, figi: str
-    ) -> Payment_date:
-        data = self.client.instruments.get_dividends(
-            figi=figi, _from=date_from, to=date_to
-        )
-        return Payment_date(
-            figi=figi,
-            date=data.payment_date,
-            amount=data.dividend_net.units + data.dividend_net.nano / (10**9),
-        )
+    async def get_tokens(self) -> None:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url=self._get_tokens_url, cookies=self._cookies
+            ) as result:
+                if result.status != 200:
+                    raise RequestException(
+                        f"Не удалось получить пользователей. status_code:{result.status}"
+                    )
+                else:
+                    bytes_result = await result.read()
+                    for i in literal_eval(bytes_result.decode()):
+                        print(i)
+                        self._users.append(
+                            UsersTokens(
+                                id=i["id"],
+                                tinkoff_invest_token=i["tinkoff_invest_token"],
+                                username=i["username"],
+                            )
+                        )
 
-    def __exit__(self):
-        Client(self.broker_token).__exit__()
+
+async def main():
+    urls = Urls(
+        authorization_url="http://31.129.105.185/auth/jwt/login",
+        get_tokens_url="http://31.129.105.185/user/users",
+        post_asset_url="http://31.129.105.185",
+        post_operation_url="http://31.129.105.185",
+    )
+    super_user = SuperUser(email="test@test.com", password="test51445")
+    bip = AsyncRecorder(urls=urls, super_user=super_user)
+    await asyncio.create_task(bip.authorization())
+    await asyncio.create_task(bip.get_tokens())
+
+
+if __name__ == "__main__":
+    asyncio.run(main=main())
