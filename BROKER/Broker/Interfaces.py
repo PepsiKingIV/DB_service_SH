@@ -1,7 +1,7 @@
 import abc
 from datetime import datetime
 
-from schemas import Operation, Assets_type, Asset, Payment_date, SuperUser, UsersTokens
+from schemas import Operation, Assets_type, Asset, Payment_date, SuperUser, UsersToken
 
 
 class IBrokerDataAdapter:
@@ -25,7 +25,7 @@ class IBrokerDataAdapter:
 
 
 class IRecorder:
-    _users: list[UsersTokens]
+    _users: list[UsersToken]
     _cookies: dict = None
     _authorization_url: str
     _post_operation_url: str
@@ -37,7 +37,7 @@ class IRecorder:
     def authorization(self) -> None: ...
 
     @abc.abstractmethod
-    def get_tokens(self) -> None: ...
+    def get_tokens(self) -> list[UsersToken]: ...
 
     @abc.abstractmethod
     def set_positions(self) -> None: ...

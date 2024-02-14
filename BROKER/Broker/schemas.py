@@ -62,7 +62,7 @@ class SuperUser(BaseModel):
     email: str
 
 
-class UsersTokens(BaseModel):
+class UsersToken(BaseModel):
     id: int
     tinkoff_invest_token: str
     username: str
