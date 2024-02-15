@@ -55,6 +55,7 @@ class Urls(BaseModel):
     post_operation_url: str
     post_asset_url: str
     get_tokens_url: str
+    get_instrument_list: str
 
 
 class SuperUser(BaseModel):

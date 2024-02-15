@@ -4,3 +4,11 @@ class LoginException(Exception):
 
 class RequestException(Exception):
     pass
+
+
+class PostOperation(Exception):
+    pass
+
+
+class PostAsset(Exception):
+    pass
