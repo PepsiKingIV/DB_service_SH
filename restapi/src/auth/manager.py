@@ -1,17 +1,18 @@
 from typing import Optional
+import smtplib
+import time
 
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, IntegerIDMixin, exceptions, models, schemas
 
 from auth.models import User
 from auth.utils import get_user_db
-# from config import SMTP_SERVER, EMAIL, PASSWORD
+from config import SMTP_SERVER, EMAIL, PASSWORD
 
-import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 SECRET = "SECRET"
-# smtp_server = smtplib.SMTP_SSL(SMTP_SERVER)
-# smtp_server.login(EMAIL, PASSWORD)
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
@@ -47,14 +48,25 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
         return created_user
 
+    # первичная реализация. Функция занимает слишком много времени и в дальнейшем будет перенесена в Celery
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ):
-        # message = f"Hello. This email was specified for registration in the application. \
-        # Token for verification: {token}. If you have not registered, write to the mail \
-        # Balanced.project.site@gmail.com"
-        # smtp_server.sendmail(EMAIL, user.email, message)
-        print(f"Verification requested for user {user.id}. Verification token: {token}")
+        msg = MIMEMultipart()
+        start = time.time()
+        msg["From"] = EMAIL
+        msg["To"] = user.email
+        msg["Subject"] = "Verification"
+        text = f"Hello. \nThis email was specified for registration in the application. \
+\nToken for verification: {token}. \
+\n\n\nIf you have not registered, write to the mail \
+\nBalanced.project.site@gmail.com"
+        msg.attach(MIMEText(text, "plain"))
+        smtp_server = smtplib.SMTP(SMTP_SERVER, 587)
+        smtp_server.starttls()
+        smtp_server.login(EMAIL, PASSWORD)
+        smtp_server.sendmail(EMAIL, user.email, msg.as_string())
+        print({"operating time": time.time() - start})
 
 
 async def get_user_manager(user_db=Depends(get_user_db)):

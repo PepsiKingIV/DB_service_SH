@@ -20,3 +20,7 @@ DB_PORT_TEST = os.environ.get("DB_PORT_TEST")
 
 
 SECRET_AUTH = os.environ.get("SECRET_AUTH")
+
+SMTP_SERVER = os.environ.get("SMTP_SERVER")
+EMAIL = os.environ.get("EMAIL")
+PASSWORD = os.environ.get("PASSWORD")

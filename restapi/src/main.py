@@ -12,7 +12,6 @@ from user.routes import route as user_route
 
 
 TOKEN = "token"
-# asyncio.run(process(user=User, frequency=timedelta(minutes=60), engine=engine))
 
 app = FastAPI(title="Sheres")
 
@@ -45,6 +44,3 @@ app.include_router(router=operation_route)
 app.include_router(router=asset_route)
 
 app.include_router(router=user_route)
-
-
-    
