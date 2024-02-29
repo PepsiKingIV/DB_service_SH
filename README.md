@@ -51,3 +51,9 @@ CONTAINER ID   IMAGE         COMMAND                  CREATED       STATUS      
 ```
 На этом развертывание закончено.
 
+### Зависимости:
+ - Fastapi
+ - SQLAlchemy
+ - Alembic
+ - Pydantic
+ - Gunicorn
