@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi_users import FastAPIUsers
 from auth.manager import get_user_manager
 from auth.models import User
@@ -9,6 +9,7 @@ from auth.auth import auth_backend
 from operation.routes import route as operation_route
 from asset.routes import route as asset_route
 from user.routes import route as user_route
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 
 TOKEN = "token"
@@ -44,3 +45,5 @@ app.include_router(router=operation_route)
 app.include_router(router=asset_route)
 
 app.include_router(router=user_route)
+
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["31.129.105.185"])

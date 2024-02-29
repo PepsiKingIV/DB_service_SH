@@ -53,7 +53,6 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         self, user: User, token: str, request: Optional[Request] = None
     ):
         msg = MIMEMultipart()
-        start = time.time()
         msg["From"] = EMAIL
         msg["To"] = user.email
         msg["Subject"] = "Verification"
@@ -62,11 +61,10 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 \n\n\nIf you have not registered, write to the mail \
 \nBalanced.project.site@gmail.com"
         msg.attach(MIMEText(text, "plain"))
-        smtp_server = smtplib.SMTP(SMTP_SERVER, 587)
-        smtp_server.starttls()
-        smtp_server.login(EMAIL, PASSWORD)
-        smtp_server.sendmail(EMAIL, user.email, msg.as_string())
-        print({"operating time": time.time() - start})
+        with smtplib.SMTP(SMTP_SERVER, 587) as smtp_server:
+            smtp_server.starttls()
+            smtp_server.login(EMAIL, PASSWORD)
+            smtp_server.sendmail(EMAIL, user.email, msg.as_string())
 
 
 async def get_user_manager(user_db=Depends(get_user_db)):
